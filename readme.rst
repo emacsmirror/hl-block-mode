@@ -11,3 +11,8 @@ Options
 
 :hl-block-delay: (float) delay in seconds until the drawing the block scope.
 :hl-block-color-tint: (color) color tint for each level.
+
+TODO
+----
+
+- Configurable brackets: currently only ``{}`` brackets are used.
