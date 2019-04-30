@@ -185,4 +185,7 @@ Inverse of `color-values'."
       (hl-block-mode-disable))))
 
 (provide 'hl-block-mode)
+;; Local Variables:
+;; indent-tabs-mode: nil
+;; End:
 ;;; hl-block-mode.el ends here
