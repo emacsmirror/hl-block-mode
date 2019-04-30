@@ -1,4 +1,4 @@
-;;; hl-block-mode.el --- highlighting nested blocks -*- lexical-binding: t; -*-
+;;; hl-block-mode.el --- highlighting nested blocks
 
 ;; Copyright (C) 2019  Campbell Barton
 
@@ -34,6 +34,8 @@
 
 ;;; Code:
 
+(require 'seq)
+
 (defcustom hl-block-delay 0.3
   "Idle time before highlighting."
   :group 'hl-block-mode
@@ -44,6 +46,8 @@
   :type  'float)
 
 (defun hl-block--syntax-prev-curly-brace (pt)
+  "A versiong of 'syntax-ppss' to match curly braces.
+PT is typically the '(point)'."
   (let
     ((start (ignore-errors (elt (syntax-ppss pt) 1)))
       )
@@ -56,7 +60,7 @@
     )
   )
 (defun hl-block--find-all-ranges (pt)
-  "Return a list of ranges starting from 'pt', outer-most to inner-most."
+  "Return a list of ranges starting from PT, outer-most to inner-most."
   (let*
     (
       (start
@@ -83,20 +87,22 @@ Inverse of `color-values'."
     (ash r -8)
     (ash g -8)
     (ash b -8)))
+
+(defvar hl-block-overlay (list))
 (defun hl-block--overlay-clear ()
-  (when (boundp 'hl-block-overlay)
-    (mapc 'delete-overlay hl-block-overlay))
+  "Clear all overlays."
+  (mapc 'delete-overlay hl-block-overlay)
   (setq hl-block-overlay (list))
   )
+
 (defun hl-block--overlay-refresh ()
+  "Update the overlays based on the cursor location."
   (hl-block--overlay-clear)
   (let
     ((block-list (save-excursion (hl-block--find-all-ranges (point)))))
     (when block-list
       (let*
         (
-          ;; (start-prev (point-min))
-          ;; (end-prev (point-max))
           (block-list
             (if (cdr block-list)
               (reverse block-list)
@@ -106,7 +112,6 @@ Inverse of `color-values'."
           (start-prev (nth 0 (nth 0 block-list)))
           (end-prev (nth 1 (nth 0 block-list)))
           (block-list-len (length block-list))
-          (block-list-last (1- block-list-len))
           (bg-color (color-values (face-attribute 'default :background)))
           (bg-color-tint (color-values hl-block-color-tint))
           ;; Check dark background is light/dark.
@@ -116,7 +121,6 @@ Inverse of `color-values'."
           (lambda (elem_range i)
             (let*
               (
-                (i-next (1+ i))
                 (i-tint (- block-list-len i))
                 (start (nth 0 elem_range))
                 (end (nth 1 elem_range))
@@ -148,6 +152,7 @@ Inverse of `color-values'."
 ;; Timer
 (defvar hl-block--delay-timer nil)
 (defun hl-block--overlay-delay ()
+  "Recalculate overlays using a delay (to avoid slow-down)."
   (when (timerp hl-block--delay-timer)
     (cancel-timer hl-block--delay-timer))
   (setq hl-block--delay-timer
@@ -156,9 +161,11 @@ Inverse of `color-values'."
     )
   )
 (defun hl-block-mode-enable ()
+  "Turn on 'hl-block-mode' for the current buffer."
   (add-hook 'post-command-hook 'hl-block--overlay-delay)
   )
 (defun hl-block-mode-disable ()
+  "Turn off 'hl-block-mode' for the current buffer."
   (hl-block--overlay-clear)
   (when (timerp hl-block--delay-timer)
     (cancel-timer hl-block--delay-timer))
