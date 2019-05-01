@@ -124,6 +124,11 @@ Inverse of `color-values'."
                  (setq end-prev end)))
              (cdr block-list))))))
 
+(defun hl-block--overlay-refresh-from-timer ()
+  "Ensure this mode has not been disabled
+(from switching buffers for eg) before highlighting."
+  (when hl-block-mode (hl-block--overlay-refresh)))
+
 ;; Timer
 (defvar hl-block--delay-timer nil)
 
@@ -133,22 +138,23 @@ Inverse of `color-values'."
     (cancel-timer hl-block--delay-timer))
   (setq hl-block--delay-timer
         (run-with-idle-timer hl-block-delay t
-                             'hl-block--overlay-refresh)))
+                             'hl-block--overlay-refresh-from-timer)))
 
 (defun hl-block-mode-enable ()
   "Turn on 'hl-block-mode' for the current buffer."
-  (add-hook 'post-command-hook 'hl-block--overlay-delay))
+  (add-hook 'post-command-hook #'hl-block--overlay-delay nil t))
 
 (defun hl-block-mode-disable ()
   "Turn off 'hl-block-mode' for the current buffer."
   (hl-block--overlay-clear)
   (when (timerp hl-block--delay-timer)
     (cancel-timer hl-block--delay-timer))
-  (remove-hook 'post-command-hook 'hl-block--overlay-delay))
+  (remove-hook 'post-command-hook #'hl-block--overlay-delay t))
 
 ;;;###autoload
 (define-minor-mode hl-block-mode
   "Highlight block under the cursor."
+  :global nil
   :lighter ""
   (cond (hl-block-mode
          (jit-lock-unregister 'hl-block-mode-enable)
