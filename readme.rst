@@ -9,10 +9,16 @@ This is a minor mode for highlighting blocks by scope.
 Options
 -------
 
-:hl-block-delay: (float) delay in seconds until the drawing the block scope.
-:hl-block-color-tint: (color) color tint for each level.
+:hl-block-bracket:
+   (symbol) bracket to use, ``{`` by default,
+   set to ``nil`` to match all bracket types.
+:hl-block-delay:
+   (float) delay in seconds until the drawing the block scope.
+:hl-block-color-tint:
+   (color) color tint for each level.
 
 TODO
 ----
 
-- Configurable brackets: currently only ``{}`` brackets are used.
+- Optionally, update instantly (without any delay).
+- Avoid updating overlays when highlights havn't moved.

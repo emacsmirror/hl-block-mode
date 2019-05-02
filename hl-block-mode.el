@@ -36,6 +36,12 @@
 
 (require 'seq)
 
+(defcustom hl-block-bracket 123
+  "Character to use as a starting bracket (defaults to '{').
+Set to nil to use all brackets."
+  :group 'hl-block-mode
+  :type  'symbol)
+
 (defcustom hl-block-delay 0.3
   "Idle time before highlighting."
   :group 'hl-block-mode
@@ -46,27 +52,29 @@
   :group 'hl-block-mode
   :type  'float)
 
-(defun hl-block--syntax-prev-curly-brace (pt)
+(defun hl-block--syntax-prev-bracket (pt)
   "A versiong of 'syntax-ppss' to match curly braces.
 PT is typically the '(point)'."
   (let ((start (ignore-errors (elt (syntax-ppss pt) 1))))
     (when start
-      (if (char-equal ?{ (char-after start))
+      (if (char-equal hl-block-bracket (char-after start))
           start
-        (hl-block--syntax-prev-curly-brace (1- start))))))
+        (hl-block--syntax-prev-bracket (1- start))))))
 
 (defun hl-block--find-all-ranges (pt)
   "Return a list of ranges starting from PT, outer-most to inner-most."
   (let* ((start
-          ;; (ignore-errors (elt (syntax-ppss pt) 1)))  ;; works for lisp
-          (hl-block--syntax-prev-curly-brace pt))
+           ;; find brackets
+           (if hl-block-bracket
+               (hl-block--syntax-prev-bracket pt)
+             (ignore-errors (elt (syntax-ppss pt) 1))))
          (end
           (when start (or (ignore-errors (scan-sexps start 1)) pt)))
-         (range_prev
+         (range-prev
           (when start (hl-block--find-all-ranges start))))
     (when start
-      (if range_prev
-          (cons (list start end) range_prev)
+      (if range-prev
+          (cons (list start end) range-prev)
         (list (list start end))))))
 
 (defun hl-block--color-values-as-string (r g b)
