@@ -64,10 +64,10 @@ PT is typically the '(point)'."
 (defun hl-block--find-all-ranges (pt)
   "Return a list of ranges starting from PT, outer-most to inner-most."
   (let* ((start
-           ;; find brackets
-           (if hl-block-bracket
-               (hl-block--syntax-prev-bracket pt)
-             (ignore-errors (elt (syntax-ppss pt) 1))))
+          ;; find brackets
+          (if hl-block-bracket
+              (hl-block--syntax-prev-bracket pt)
+            (ignore-errors (elt (syntax-ppss pt) 1))))
          (end
           (when start (or (ignore-errors (scan-sexps start 1)) pt)))
          (range-prev
@@ -122,15 +122,15 @@ Inverse of `color-values'."
                                          bg-color bg-color-tint)
                             (cl-mapcar '(lambda (a b) (- a (* i-tint b)))
                                        bg-color bg-color-tint)))))
-                 (overlay-put elem-overlay-start
-                              'face `(:background ,bg-color-blend))
-                 (overlay-put elem-overlay-end
-                              'face `(:background ,bg-color-blend))
-                 (add-to-list 'hl-block-overlay elem-overlay-start)
-                 (add-to-list 'hl-block-overlay elem-overlay-end)
-                 (setq start-prev start)
-                 (setq end-prev end)))
-             (cdr block-list))))))
+             (overlay-put elem-overlay-start
+                          'face `(:background ,bg-color-blend))
+             (overlay-put elem-overlay-end
+                          'face `(:background ,bg-color-blend))
+             (add-to-list 'hl-block-overlay elem-overlay-start)
+             (add-to-list 'hl-block-overlay elem-overlay-end)
+             (setq start-prev start)
+             (setq end-prev end)))
+         (cdr block-list))))))
 
 (defun hl-block--overlay-refresh-from-timer ()
   "Ensure this mode has not been disabled
