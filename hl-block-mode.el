@@ -85,7 +85,7 @@ Inverse of `color-values'."
           (ash g -8)
           (ash b -8)))
 
-(defvar hl-block-overlay nil)
+(defvar-local hl-block-overlay nil)
 
 (defun hl-block--overlay-clear ()
   "Clear all overlays."
