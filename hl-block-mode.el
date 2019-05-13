@@ -36,7 +36,7 @@
 
 (require 'seq)
 
-(defcustom hl-block-bracket 123
+(defcustom hl-block-bracket ?{
   "Character to use as a starting bracket (defaults to '{').
 Set to nil to use all brackets."
   :group 'hl-block-mode
