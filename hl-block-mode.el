@@ -53,7 +53,7 @@ Set to nil to use all brackets."
   :type  'float)
 
 (defun hl-block--syntax-prev-bracket (pt)
-  "A versiong of 'syntax-ppss' to match curly braces.
+  "A version of `syntax-ppss' to match curly braces.
 PT is typically the '(point)'."
   (let ((start (ignore-errors (elt (syntax-ppss pt) 1))))
     (when start
