@@ -133,8 +133,8 @@ Inverse of `color-values'."
          (cdr block-list))))))
 
 (defun hl-block--overlay-refresh-from-timer ()
-  "Ensure this mode has not been disabled
-(from switching buffers for eg) before highlighting."
+  "Ensure this mode has not been disabled before highlighting.
+This can happen when switching buffers."
   (when hl-block-mode (hl-block--overlay-refresh)))
 
 ;; Timer
@@ -177,6 +177,7 @@ Inverse of `color-values'."
 
 ;;;###autoload
 (defun turn-on-hl-block-mode ()
+  "Enable command `hl-block-mode'."
   (hl-block-mode 1))
 
 
