@@ -171,6 +171,15 @@ Inverse of `color-values'."
          (jit-lock-unregister 'hl-block-mode-enable)
          (hl-block-mode-disable))))
 
+;;;###autoload
+(define-globalized-minor-mode global-hl-block-mode hl-block-mode
+  turn-on-hl-block-mode)
+
+;;;###autoload
+(defun turn-on-hl-block-mode ()
+  (hl-block-mode 1))
+
+
 (provide 'hl-block-mode)
 ;; Local Variables:
 ;; indent-tabs-mode: nil
