@@ -173,10 +173,10 @@ This can happen when switching buffers."
 
 ;;;###autoload
 (define-globalized-minor-mode global-hl-block-mode hl-block-mode
-  turn-on-hl-block-mode)
+  hl-block-mode-turn-on)
 
 ;;;###autoload
-(defun turn-on-hl-block-mode ()
+(defun hl-block-mode-turn-on ()
   "Enable command `hl-block-mode'."
   (hl-block-mode 1))
 
