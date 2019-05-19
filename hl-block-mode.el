@@ -137,11 +137,6 @@ Inverse of `color-values'."
              (setq end-prev end)))
          (cdr block-list))))))
 
-(defun hl-block--overlay-refresh-from-timer ()
-  "Ensure this mode has not been disabled before highlighting.
-This can happen when switching buffers."
-  (when hl-block-mode (hl-block--overlay-refresh)))
-
 ;; Timer
 (defvar hl-block--delay-timer nil)
 
@@ -175,6 +170,11 @@ This can happen when switching buffers."
         (t
          (jit-lock-unregister 'hl-block-mode-enable)
          (hl-block-mode-disable))))
+
+(defun hl-block--overlay-refresh-from-timer ()
+  "Ensure this mode has not been disabled before highlighting.
+This can happen when switching buffers."
+  (when hl-block-mode (hl-block--overlay-refresh)))
 
 ;;;###autoload
 (define-globalized-minor-mode global-hl-block-mode hl-block-mode
