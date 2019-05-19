@@ -52,6 +52,11 @@ Set to nil to use all brackets."
   :group 'hl-block-mode
   :type  'float)
 
+(defcustom hl-block-mode-lighter ""
+  "Lighter for hl-block-mode."
+  :group 'hl-block-mode
+  :type 'string)
+
 (defun hl-block--syntax-prev-bracket (pt)
   "A version of `syntax-ppss' to match curly braces.
 PT is typically the '(point)'."
@@ -163,7 +168,7 @@ This can happen when switching buffers."
 (define-minor-mode hl-block-mode
   "Highlight block under the cursor."
   :global nil
-  :lighter ""
+  :lighter hl-block-mode-lighter
   (cond (hl-block-mode
          (jit-lock-unregister 'hl-block-mode-enable)
          (hl-block-mode-enable))
