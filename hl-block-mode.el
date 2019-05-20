@@ -43,7 +43,7 @@ Set to nil to use all brackets."
   :group 'hl-block-mode
   :type  'symbol)
 
-(defcustom hl-block-delay 0.3
+(defcustom hl-block-delay 0.2
   "Idle time before highlighting."
   :group 'hl-block-mode
   :type  'float)
