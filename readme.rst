@@ -22,3 +22,4 @@ TODO
 
 - Optionally, update instantly (without any delay).
 - Avoid updating overlays when highlights havn't moved.
+- Add default brackets based on the major mode, `()` for lisp's, `{}` for C/C++ etc.
