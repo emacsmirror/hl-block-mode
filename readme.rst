@@ -1,6 +1,6 @@
 
-Hightlight Block Mode
-=====================
+Highlight Block Mode
+====================
 
 This is a minor mode for highlighting blocks by scope.
 
