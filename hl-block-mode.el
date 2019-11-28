@@ -129,9 +129,9 @@ Inverse of `color-values'."
                             (cl-mapcar '(lambda (a b) (- a (* i-tint b)))
                                        bg-color bg-color-tint)))))
              (overlay-put elem-overlay-start
-                          'face `(:background ,bg-color-blend))
+                          'face `(:background ,bg-color-blend :extend t))
              (overlay-put elem-overlay-end
-                          'face `(:background ,bg-color-blend))
+                          'face `(:background ,bg-color-blend :extend t))
              (add-to-list 'hl-block-overlay elem-overlay-start)
              (add-to-list 'hl-block-overlay elem-overlay-end)
              (setq start-prev start)
