@@ -41,17 +41,17 @@
   "Character to use as a starting bracket (defaults to '{').
 Set to nil to use all brackets."
   :group 'hl-block-mode
-  :type  'symbol)
+  :type 'symbol)
 
 (defcustom hl-block-delay 0.2
-  "Idle time before highlighting."
+  "Idle time to wait before highlighting."
   :group 'hl-block-mode
-  :type  'float)
+  :type 'float)
 
 (defcustom hl-block-color-tint "#040404"
   "Color to add/subtract from the background each scope step."
   :group 'hl-block-mode
-  :type  'float)
+  :type 'float)
 
 (defcustom hl-block-mode-lighter ""
   "Lighter for hl-block-mode."
@@ -61,9 +61,7 @@ Set to nil to use all brackets."
 (defun hl-block--syntax-prev-bracket (pt)
   "A version of `syntax-ppss' to match curly braces.
 PT is typically the '(point)'."
-  (let
-    (
-      (start (ignore-errors (elt (syntax-ppss pt) 1))))
+  (let ((start (ignore-errors (elt (syntax-ppss pt) 1))))
     (when start
       (if (char-equal hl-block-bracket (char-after start))
         start
@@ -79,9 +77,11 @@ PT is typically the '(point)'."
           (hl-block--syntax-prev-bracket pt)
           (ignore-errors (elt (syntax-ppss pt) 1))))
       (end
-        (when start (or (ignore-errors (scan-sexps start 1)) pt)))
+        (when start
+          (or (ignore-errors (scan-sexps start 1)) pt)))
       (range-prev
-        (when start (hl-block--find-all-ranges start))))
+        (when start
+          (hl-block--find-all-ranges start))))
     (when start
       (if range-prev
         (cons (list start end) range-prev)
@@ -90,11 +90,7 @@ PT is typically the '(point)'."
 (defun hl-block--color-values-as-string (r g b)
   "Build a color from R G B.
 Inverse of `color-values'."
-  (format
-    "#%02x%02x%02x"
-    (ash r -8)
-    (ash g -8)
-    (ash b -8)))
+  (format "#%02x%02x%02x" (ash r -8) (ash g -8) (ash b -8)))
 
 (defvar-local hl-block-overlay nil)
 
@@ -106,9 +102,7 @@ Inverse of `color-values'."
 (defun hl-block--overlay-refresh ()
   "Update the overlays based on the cursor location."
   (hl-block--overlay-clear)
-  (let
-    (
-      (block-list (save-excursion (hl-block--find-all-ranges (point)))))
+  (let ((block-list (save-excursion (hl-block--find-all-ranges (point)))))
     (when block-list
       (let*
         (
@@ -135,14 +129,10 @@ Inverse of `color-values'."
                 (bg-color-blend
                   (apply 'hl-block--color-values-as-string
                     (if do-highlight
-                      (cl-mapcar '(lambda (a b) (+ a (* i-tint b)))
-                        bg-color bg-color-tint)
-                      (cl-mapcar '(lambda (a b) (- a (* i-tint b)))
-                        bg-color bg-color-tint)))))
-              (overlay-put elem-overlay-start
-                'face `(:background ,bg-color-blend :extend t))
-              (overlay-put elem-overlay-end
-                'face `(:background ,bg-color-blend :extend t))
+                      (cl-mapcar '(lambda (a b) (+ a (* i-tint b))) bg-color bg-color-tint)
+                      (cl-mapcar '(lambda (a b) (- a (* i-tint b))) bg-color bg-color-tint)))))
+              (overlay-put elem-overlay-start 'face `(:background ,bg-color-blend :extend t))
+              (overlay-put elem-overlay-end 'face `(:background ,bg-color-blend :extend t))
               (add-to-list 'hl-block-overlay elem-overlay-start)
               (add-to-list 'hl-block-overlay elem-overlay-end)
               (setq start-prev start)
@@ -157,8 +147,7 @@ Inverse of `color-values'."
   (when (timerp hl-block--delay-timer)
     (cancel-timer hl-block--delay-timer))
   (setq hl-block--delay-timer
-    (run-with-idle-timer hl-block-delay t
-      'hl-block--overlay-refresh-from-timer)))
+    (run-with-idle-timer hl-block-delay t 'hl-block--overlay-refresh-from-timer)))
 
 (defun hl-block-mode-enable ()
   "Turn on 'hl-block-mode' for the current buffer."
@@ -176,6 +165,7 @@ Inverse of `color-values'."
   "Highlight block under the cursor."
   :global nil
   :lighter hl-block-mode-lighter
+
   (cond
     (hl-block-mode
       (jit-lock-unregister 'hl-block-mode-enable)
@@ -187,11 +177,11 @@ Inverse of `color-values'."
 (defun hl-block--overlay-refresh-from-timer ()
   "Ensure this mode has not been disabled before highlighting.
 This can happen when switching buffers."
-  (when hl-block-mode (hl-block--overlay-refresh)))
+  (when hl-block-mode
+    (hl-block--overlay-refresh)))
 
 ;;;###autoload
-(define-globalized-minor-mode global-hl-block-mode hl-block-mode
-  hl-block-mode-turn-on)
+(define-globalized-minor-mode global-hl-block-mode hl-block-mode hl-block-mode-turn-on)
 
 ;;;###autoload
 (defun hl-block-mode-turn-on ()
