@@ -186,8 +186,8 @@ This can happen when switching buffers."
 ;;;###autoload
 (defun hl-block-mode-turn-on ()
   "Enable command `hl-block-mode'."
-  (hl-block-mode 1))
-
+  (when (and (not (minibufferp)) (not hl-block-mode))
+    (hl-block-mode 1)))
 
 (provide 'hl-block-mode)
 ;; Local Variables:
