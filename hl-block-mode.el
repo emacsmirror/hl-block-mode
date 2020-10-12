@@ -4,7 +4,7 @@
 
 ;; Author: Campbell Barton <ideasman42@gmail.com>
 
-;; URL: https://github.com/ideasman42/emacs-hl-block-mode
+;; URL: https://gitlab.com/ideasman42/emacs-hl-block-mode
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "26.0"))
 
