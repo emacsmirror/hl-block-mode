@@ -1,4 +1,4 @@
-;;; hl-block-mode.el --- highlighting nested blocks
+;;; hl-block-mode.el --- highlighting nested blocks -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2019  Campbell Barton
 
@@ -129,8 +129,8 @@ Inverse of `color-values'."
                 (bg-color-blend
                   (apply 'hl-block--color-values-as-string
                     (if do-highlight
-                      (cl-mapcar '(lambda (a b) (+ a (* i-tint b))) bg-color bg-color-tint)
-                      (cl-mapcar '(lambda (a b) (- a (* i-tint b))) bg-color bg-color-tint)))))
+                      (cl-mapcar `(lambda (a b) (+ a (* ,i-tint b))) bg-color bg-color-tint)
+                      (cl-mapcar `(lambda (a b) (- a (* ,i-tint b))) bg-color bg-color-tint)))))
               (overlay-put elem-overlay-start 'face `(:background ,bg-color-blend :extend t))
               (overlay-put elem-overlay-end 'face `(:background ,bg-color-blend :extend t))
               (add-to-list 'hl-block-overlay elem-overlay-start)
@@ -181,7 +181,11 @@ This can happen when switching buffers."
     (hl-block--overlay-refresh)))
 
 ;;;###autoload
-(define-globalized-minor-mode global-hl-block-mode hl-block-mode hl-block-mode-turn-on)
+(define-globalized-minor-mode
+  global-hl-block-mode
+  hl-block-mode
+  hl-block-mode-turn-on
+  :group 'hl-block-mode)
 
 ;;;###autoload
 (defun hl-block-mode-turn-on ()
