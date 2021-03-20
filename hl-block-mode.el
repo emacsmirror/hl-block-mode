@@ -163,6 +163,7 @@ Inverse of `color-values'."
 ;;;###autoload
 (define-minor-mode hl-block-mode
   "Highlight block under the cursor."
+  :group 'hl-block-mode
   :global nil
   :lighter hl-block-mode-lighter
 
