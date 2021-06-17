@@ -142,6 +142,12 @@ Inverse of `color-values'."
 ;; Timer
 (defvar hl-block--delay-timer nil)
 
+(defun hl-block--overlay-refresh-from-timer ()
+  "Ensure this mode has not been disabled before highlighting.
+This can happen when switching buffers."
+  (when hl-block-mode
+    (hl-block--overlay-refresh)))
+
 (defun hl-block--overlay-delay ()
   "Recalculate overlays using a delay (to avoid slow-down)."
   (when (timerp hl-block--delay-timer)
@@ -160,6 +166,11 @@ Inverse of `color-values'."
     (cancel-timer hl-block--delay-timer))
   (remove-hook 'post-command-hook #'hl-block--overlay-delay t))
 
+(defun hl-block-mode-turn-on ()
+  "Enable command `hl-block-mode'."
+  (when (and (not (minibufferp)) (not hl-block-mode))
+    (hl-block-mode 1)))
+
 ;;;###autoload
 (define-minor-mode hl-block-mode
   "Highlight block under the cursor."
@@ -175,24 +186,12 @@ Inverse of `color-values'."
       (jit-lock-unregister 'hl-block-mode-enable)
       (hl-block-mode-disable))))
 
-(defun hl-block--overlay-refresh-from-timer ()
-  "Ensure this mode has not been disabled before highlighting.
-This can happen when switching buffers."
-  (when hl-block-mode
-    (hl-block--overlay-refresh)))
-
 ;;;###autoload
 (define-globalized-minor-mode
   global-hl-block-mode
-  hl-block-mode
-  hl-block-mode-turn-on
-  :group 'hl-block-mode)
 
-;;;###autoload
-(defun hl-block-mode-turn-on ()
-  "Enable command `hl-block-mode'."
-  (when (and (not (minibufferp)) (not hl-block-mode))
-    (hl-block-mode 1)))
+  hl-block-mode hl-block-mode-turn-on
+  :group 'hl-block-mode)
 
 (provide 'hl-block-mode)
 ;; Local Variables:
