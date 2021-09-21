@@ -1,6 +1,6 @@
 ;;; hl-block-mode.el --- highlighting nested blocks -*- lexical-binding: t -*-
 
-;; Copyright (C) 2019  Campbell Barton
+;; Copyright (C) 2019-2021  Campbell Barton
 
 ;; Author: Campbell Barton <ideasman42@gmail.com>
 
@@ -54,7 +54,7 @@ Set to nil to use all brackets."
   :type 'float)
 
 (defcustom hl-block-mode-lighter ""
-  "Lighter for hl-block-mode."
+  "Lighter for `hl-block-mode'."
   :group 'hl-block-mode
   :type 'string)
 
@@ -145,7 +145,7 @@ Inverse of `color-values'."
 (defun hl-block--overlay-refresh-from-timer ()
   "Ensure this mode has not been disabled before highlighting.
 This can happen when switching buffers."
-  (when hl-block-mode
+  (when (bound-and-true-p hl-block-mode)
     (hl-block--overlay-refresh)))
 
 (defun hl-block--overlay-delay ()
@@ -168,7 +168,7 @@ This can happen when switching buffers."
 
 (defun hl-block-mode-turn-on ()
   "Enable command `hl-block-mode'."
-  (when (and (not (minibufferp)) (not hl-block-mode))
+  (when (and (not (minibufferp)) (not (bound-and-true-p hl-block-mode)))
     (hl-block-mode 1)))
 
 ;;;###autoload
