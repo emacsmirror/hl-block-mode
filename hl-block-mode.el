@@ -68,10 +68,6 @@ Set to nil to use all brackets."
 
 (defvar-local hl-block-overlay nil)
 
-;; Global timer.
-(defvar hl-block--delay-timer nil)
-
-
 ;; ---------------------------------------------------------------------------
 ;; Internal Functions/Macros
 
@@ -154,33 +150,120 @@ Inverse of `color-values'."
               (setq end-prev end)))
           (cdr block-list))))))
 
-(defun hl-block--overlay-refresh-from-timer ()
-  "Ensure this mode has not been disabled before highlighting.
-This can happen when switching buffers."
-  (when (bound-and-true-p hl-block-mode)
-    (hl-block--overlay-refresh)))
 
-(defun hl-block--overlay-delay ()
-  "Recalculate overlays using a delay (to avoid slow-down)."
-  (when (timerp hl-block--delay-timer)
-    (cancel-timer hl-block--delay-timer))
-  (setq hl-block--delay-timer
-    (run-with-idle-timer hl-block-delay t 'hl-block--overlay-refresh-from-timer)))
+;; ---------------------------------------------------------------------------
+;; Internal Timer Management
+;;
+;; This works as follows:
+;;
+;; - The timer is kept active as long as the local mode is enabled.
+;; - Entering a buffer runs the buffer local `window-state-change-hook'
+;;   immediately which checks if the mode is enabled,
+;;   set up the global timer if it is.
+;; - Switching any other buffer wont run this hook,
+;;   rely on the idle timer it's self running, which detects the active mode,
+;;   canceling it's self if the mode isn't active.
+;;
+;; This is a reliable way of using a global,
+;; repeating idle timer that is effectively buffer local.
+;;
 
+;; Global idle timer (repeating), keep active while the buffer-local mode is enabled.
+(defvar hl-block--global-timer nil)
+;; When t, the timer will update buffers in all other visible windows.
+(defvar hl-block--dirty-flush-all nil)
+;; When true, the buffer should be updated when inactive.
+(defvar-local hl-block--dirty nil)
+
+(defun hl-block--time-callback-or-disable ()
+  "Callback that run the repeat timer."
+
+  ;; Ensure all other buffers are highlighted on request.
+  (let ((is-mode-active (bound-and-true-p hl-block-mode)))
+    ;; When this buffer is not in the mode, flush all other buffers.
+    (cond
+      (is-mode-active
+        ;; Don't update in the window loop to ensure we always
+        ;; update the current buffer in the current context.
+        (setq hl-block--dirty nil))
+      (t
+        ;; If the timer ran when in another buffer,
+        ;; a previous buffer may need a final refresh, ensure this happens.
+        (setq hl-block--dirty-flush-all t)))
+
+    (when hl-block--dirty-flush-all
+      ;; Run the mode callback for all other buffers in the queue.
+      (dolist (frame (frame-list))
+        (dolist (win (window-list frame -1))
+          (let ((buf (window-buffer win)))
+            (when
+              (and
+                (buffer-local-value 'hl-block-mode buf)
+                (buffer-local-value 'hl-block--dirty buf))
+              (with-selected-frame frame
+                (with-selected-window win
+                  (with-current-buffer buf
+                    (setq hl-block--dirty nil)
+                    (hl-block--overlay-refresh)))))))))
+    ;; Always keep the current buffer dirty
+    ;; so navigating away from this buffer will refresh it.
+    (when is-mode-active
+      (setq hl-block--dirty t))
+
+    (cond
+      (is-mode-active
+        (hl-block--overlay-refresh))
+      (t ;; Cancel the timer until the current buffer uses this mode again.
+        (hl-block--time-ensure nil)))))
+
+(defun hl-block--time-ensure (state)
+  "Ensure the timer is enabled when STATE is non-nil, otherwise disable."
+  (cond
+    (state
+      (unless hl-block--global-timer
+        (setq hl-block--global-timer
+          (run-with-idle-timer hl-block-delay :repeat 'hl-block--time-callback-or-disable))))
+    (t
+      (when hl-block--global-timer
+        (cancel-timer hl-block--global-timer)
+        (setq hl-block--global-timer nil)))))
+
+(defun hl-block--time-reset ()
+  "Run this when the buffer changes."
+  ;; Ensure changing windows doesn't leave other buffers with stale highlight.
+  (cond
+    ((bound-and-true-p hl-block-mode)
+      (setq hl-block--dirty-flush-all t)
+      (setq hl-block--dirty t)
+      (hl-block--time-ensure t))
+    (t
+      (hl-block--time-ensure nil))))
+
+(defun hl-block--time-buffer-local-enable ()
+  "Ensure buffer local state is enabled."
+  ;; Needed in case focus changes before the idle timer runs.
+  (setq hl-block--dirty-flush-all t)
+  (setq hl-block--dirty t)
+  (hl-block--time-ensure t)
+  (add-hook 'window-state-change-hook #'hl-block--time-reset nil t))
+
+(defun hl-block--time-buffer-local-disable ()
+  "Ensure buffer local state is disabled."
+  (kill-local-variable 'hl-block--dirty)
+  (hl-block--time-ensure nil)
+  (remove-hook 'window-state-change-hook #'hl-block--time-reset t))
 
 ;; ---------------------------------------------------------------------------
 ;; Internal Mode Management
 
 (defun hl-block-mode-enable ()
   "Turn on 'hl-block-mode' for the current buffer."
-  (add-hook 'post-command-hook #'hl-block--overlay-delay nil t))
+  (hl-block--time-buffer-local-enable))
 
 (defun hl-block-mode-disable ()
   "Turn off 'hl-block-mode' for the current buffer."
   (hl-block--overlay-clear)
-  (when (timerp hl-block--delay-timer)
-    (cancel-timer hl-block--delay-timer))
-  (remove-hook 'post-command-hook #'hl-block--overlay-delay t))
+  (hl-block--time-buffer-local-disable))
 
 (defun hl-block-mode-turn-on ()
   "Enable command `hl-block-mode'."
