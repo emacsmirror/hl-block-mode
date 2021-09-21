@@ -37,6 +37,10 @@
 
 (require 'seq)
 
+
+;; ---------------------------------------------------------------------------
+;; Custom Variables
+
 (defcustom hl-block-bracket ?{
   "Character to use as a starting bracket (defaults to '{').
 Set to nil to use all brackets."
@@ -57,6 +61,19 @@ Set to nil to use all brackets."
   "Lighter for `hl-block-mode'."
   :group 'hl-block-mode
   :type 'string)
+
+
+;; ---------------------------------------------------------------------------
+;; Internal Variables
+
+(defvar-local hl-block-overlay nil)
+
+;; Global timer.
+(defvar hl-block--delay-timer nil)
+
+
+;; ---------------------------------------------------------------------------
+;; Internal Functions/Macros
 
 (defun hl-block--syntax-prev-bracket (pt)
   "A version of `syntax-ppss' to match curly braces.
@@ -91,8 +108,6 @@ PT is typically the '(point)'."
   "Build a color from R G B.
 Inverse of `color-values'."
   (format "#%02x%02x%02x" (ash r -8) (ash g -8) (ash b -8)))
-
-(defvar-local hl-block-overlay nil)
 
 (defun hl-block--overlay-clear ()
   "Clear all overlays."
@@ -139,9 +154,6 @@ Inverse of `color-values'."
               (setq end-prev end)))
           (cdr block-list))))))
 
-;; Timer
-(defvar hl-block--delay-timer nil)
-
 (defun hl-block--overlay-refresh-from-timer ()
   "Ensure this mode has not been disabled before highlighting.
 This can happen when switching buffers."
@@ -154,6 +166,10 @@ This can happen when switching buffers."
     (cancel-timer hl-block--delay-timer))
   (setq hl-block--delay-timer
     (run-with-idle-timer hl-block-delay t 'hl-block--overlay-refresh-from-timer)))
+
+
+;; ---------------------------------------------------------------------------
+;; Internal Mode Management
 
 (defun hl-block-mode-enable ()
   "Turn on 'hl-block-mode' for the current buffer."
@@ -170,6 +186,9 @@ This can happen when switching buffers."
   "Enable command `hl-block-mode'."
   (when (and (not (minibufferp)) (not (bound-and-true-p hl-block-mode)))
     (hl-block-mode 1)))
+
+;; ---------------------------------------------------------------------------
+;; Public API
 
 ;;;###autoload
 (define-minor-mode hl-block-mode
