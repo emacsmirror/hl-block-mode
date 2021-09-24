@@ -1,4 +1,4 @@
-;;; hl-block-mode.el --- highlighting nested blocks -*- lexical-binding: t -*-
+;;; hl-block-mode.el --- Highlighting nested blocks -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2019-2021  Campbell Barton
 
@@ -6,7 +6,7 @@
 
 ;; URL: https://gitlab.com/ideasman42/emacs-hl-block-mode
 ;; Version: 0.1
-;; Package-Requires: ((emacs "26.0"))
+;; Package-Requires: ((emacs "26.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ Set to nil to use all brackets."
   :type 'float)
 
 (defcustom hl-block-mode-lighter ""
-  "Lighter for `hl-block-mode'."
+  "Lighter for option `hl-block-mode'."
   :group 'hl-block-mode
   :type 'string)
 
