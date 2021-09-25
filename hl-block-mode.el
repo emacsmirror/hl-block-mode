@@ -263,6 +263,7 @@ Inverse of `color-values'."
 (defun hl-block-mode-disable ()
   "Turn off 'hl-block-mode' for the current buffer."
   (hl-block--overlay-clear)
+  (kill-local-variable 'hl-block-overlay)
   (hl-block--time-buffer-local-disable))
 
 (defun hl-block-mode-turn-on ()
