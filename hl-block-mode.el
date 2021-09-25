@@ -74,31 +74,31 @@ Set to nil to use all brackets."
 (defun hl-block--syntax-prev-bracket (pt)
   "A version of `syntax-ppss' to match curly braces.
 PT is typically the '(point)'."
-  (let ((start (ignore-errors (elt (syntax-ppss pt) 1))))
-    (when start
-      (if (char-equal hl-block-bracket (char-after start))
-        start
-        (hl-block--syntax-prev-bracket (1- start))))))
+  (let ((beg (ignore-errors (elt (syntax-ppss pt) 1))))
+    (when beg
+      (if (char-equal hl-block-bracket (char-after beg))
+        beg
+        (hl-block--syntax-prev-bracket (1- beg))))))
 
 (defun hl-block--find-all-ranges (pt)
   "Return a list of ranges starting from PT, outer-most to inner-most."
   (let*
     (
-      (start
+      (beg
         ;; find brackets
         (if hl-block-bracket
           (hl-block--syntax-prev-bracket pt)
           (ignore-errors (elt (syntax-ppss pt) 1))))
       (end
-        (when start
-          (or (ignore-errors (scan-sexps start 1)) pt)))
+        (when beg
+          (or (ignore-errors (scan-sexps beg 1)) pt)))
       (range-prev
-        (when start
-          (hl-block--find-all-ranges start))))
-    (when start
+        (when beg
+          (hl-block--find-all-ranges beg))))
+    (when beg
       (if range-prev
-        (cons (list start end) range-prev)
-        (list (list start end))))))
+        (cons (list beg end) range-prev)
+        (list (list beg end))))))
 
 (defun hl-block--find-all-ranges-or-fallback (pt)
   "Return a list of ranges starting from PT, outer-most to inner-most (with fallback)."
@@ -112,14 +112,14 @@ PT is typically the '(point)'."
 Inverse of `color-values'."
   (format "#%02x%02x%02x" (ash (aref color 0) -8) (ash (aref color 1) -8) (ash (aref color 2) -8)))
 
-(defun hl-block--color-tint-bright (a b tint)
+(defun hl-block--color-tint-add (a b tint)
   "Tint color lighter from A to B by TINT amount."
   (vector
     (+ (aref a 0) (* tint (aref b 0)))
     (+ (aref a 1) (* tint (aref b 1)))
     (+ (aref a 2) (* tint (aref b 2)))))
 
-(defun hl-block--color-tint-dark (a b tint)
+(defun hl-block--color-tint-sub (a b tint)
   "Tint colors darker from A to B by TINT amount."
   (vector
     (- (aref a 0) (* tint (aref b 0)))
@@ -137,7 +137,7 @@ Inverse of `color-values'."
   (when-let ((block-list (save-excursion (hl-block--find-all-ranges-or-fallback (point)))))
     (let*
       (
-        (start-prev (nth 0 (nth 0 block-list)))
+        (beg-prev (nth 0 (nth 0 block-list)))
         (end-prev (nth 1 (nth 0 block-list)))
         (block-list-len (length block-list))
         (bg-color (apply 'vector (color-values (face-attribute 'default :background))))
@@ -151,20 +151,20 @@ Inverse of `color-values'."
         (let*
           (
             (i-tint (- block-list-len i))
-            (start (nth 0 elem_range))
+            (beg (nth 0 elem_range))
             (end (nth 1 elem_range))
-            (elem-overlay-start (make-overlay start start-prev))
+            (elem-overlay-beg (make-overlay beg beg-prev))
             (elem-overlay-end (make-overlay end-prev end))
             (bg-color-blend
               (hl-block--color-values-as-string
                 (if do-highlight
-                  (hl-block--color-tint-bright bg-color bg-color-tint i-tint)
-                  (hl-block--color-tint-dark bg-color bg-color-tint i-tint)))))
-          (overlay-put elem-overlay-start 'face `(:background ,bg-color-blend :extend t))
+                  (hl-block--color-tint-add bg-color bg-color-tint i-tint)
+                  (hl-block--color-tint-sub bg-color bg-color-tint i-tint)))))
+          (overlay-put elem-overlay-beg 'face `(:background ,bg-color-blend :extend t))
           (overlay-put elem-overlay-end 'face `(:background ,bg-color-blend :extend t))
-          (push elem-overlay-start hl-block-overlay)
+          (push elem-overlay-beg hl-block-overlay)
           (push elem-overlay-end hl-block-overlay)
-          (setq start-prev start)
+          (setq beg-prev beg)
           (setq end-prev end))
         (setq i (1+ i))))))
 
