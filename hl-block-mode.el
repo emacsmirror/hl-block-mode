@@ -100,10 +100,31 @@ PT is typically the '(point)'."
         (cons (list start end) range-prev)
         (list (list start end))))))
 
-(defun hl-block--color-values-as-string (r g b)
-  "Build a color from R G B.
+(defun hl-block--find-all-ranges-or-fallback (pt)
+  "Return a list of ranges starting from PT, outer-most to inner-most (with fallback)."
+  (when-let ((block-list (hl-block--find-all-ranges pt)))
+    (if (cdr block-list)
+      (reverse block-list)
+      (cons (list (point-min) (point-max)) block-list))))
+
+(defun hl-block--color-values-as-string (color)
+  "Build a color from COLOR.
 Inverse of `color-values'."
-  (format "#%02x%02x%02x" (ash r -8) (ash g -8) (ash b -8)))
+  (format "#%02x%02x%02x" (ash (aref color 0) -8) (ash (aref color 1) -8) (ash (aref color 2) -8)))
+
+(defun hl-block--color-tint-bright (a b tint)
+  "Tint color lighter from A to B by TINT amount."
+  (vector
+    (+ (aref a 0) (* tint (aref b 0)))
+    (+ (aref a 1) (* tint (aref b 1)))
+    (+ (aref a 2) (* tint (aref b 2)))))
+
+(defun hl-block--color-tint-dark (a b tint)
+  "Tint colors darker from A to B by TINT amount."
+  (vector
+    (- (aref a 0) (* tint (aref b 0)))
+    (- (aref a 1) (* tint (aref b 1)))
+    (- (aref a 2) (* tint (aref b 2)))))
 
 (defun hl-block--overlay-clear ()
   "Clear all overlays."
@@ -113,42 +134,39 @@ Inverse of `color-values'."
 (defun hl-block--overlay-refresh ()
   "Update the overlays based on the cursor location."
   (hl-block--overlay-clear)
-  (let ((block-list (save-excursion (hl-block--find-all-ranges (point)))))
-    (when block-list
-      (let*
-        (
-          (block-list
-            (if (cdr block-list)
-              (reverse block-list)
-              (cons (list (point-min) (point-max)) block-list)))
-          (start-prev (nth 0 (nth 0 block-list)))
-          (end-prev (nth 1 (nth 0 block-list)))
-          (block-list-len (length block-list))
-          (bg-color (color-values (face-attribute 'default :background)))
-          (bg-color-tint (color-values hl-block-color-tint))
-          ;; Check dark background is light/dark.
-          (do-highlight (> 98304 (apply '+ bg-color))))
-        (seq-map-indexed
-          (lambda (elem_range i)
-            (let*
-              (
-                (i-tint (- block-list-len i))
-                (start (nth 0 elem_range))
-                (end (nth 1 elem_range))
-                (elem-overlay-start (make-overlay start start-prev))
-                (elem-overlay-end (make-overlay end-prev end))
-                (bg-color-blend
-                  (apply 'hl-block--color-values-as-string
-                    (if do-highlight
-                      (cl-mapcar `(lambda (a b) (+ a (* ,i-tint b))) bg-color bg-color-tint)
-                      (cl-mapcar `(lambda (a b) (- a (* ,i-tint b))) bg-color bg-color-tint)))))
-              (overlay-put elem-overlay-start 'face `(:background ,bg-color-blend :extend t))
-              (overlay-put elem-overlay-end 'face `(:background ,bg-color-blend :extend t))
-              (push elem-overlay-start hl-block-overlay)
-              (push elem-overlay-end hl-block-overlay)
-              (setq start-prev start)
-              (setq end-prev end)))
-          (cdr block-list))))))
+  (when-let ((block-list (save-excursion (hl-block--find-all-ranges-or-fallback (point)))))
+    (let*
+      (
+        (start-prev (nth 0 (nth 0 block-list)))
+        (end-prev (nth 1 (nth 0 block-list)))
+        (block-list-len (length block-list))
+        (bg-color (apply 'vector (color-values (face-attribute 'default :background))))
+        (bg-color-tint (apply 'vector (color-values hl-block-color-tint)))
+        ;; Check dark background is light/dark.
+        (do-highlight (> 98304 (+ (aref bg-color 0) (aref bg-color 1) (aref bg-color 2))))
+        ;; Iterator.
+        (i 0))
+
+      (dolist (elem_range (cdr block-list))
+        (let*
+          (
+            (i-tint (- block-list-len i))
+            (start (nth 0 elem_range))
+            (end (nth 1 elem_range))
+            (elem-overlay-start (make-overlay start start-prev))
+            (elem-overlay-end (make-overlay end-prev end))
+            (bg-color-blend
+              (hl-block--color-values-as-string
+                (if do-highlight
+                  (hl-block--color-tint-bright bg-color bg-color-tint i-tint)
+                  (hl-block--color-tint-dark bg-color bg-color-tint i-tint)))))
+          (overlay-put elem-overlay-start 'face `(:background ,bg-color-blend :extend t))
+          (overlay-put elem-overlay-end 'face `(:background ,bg-color-blend :extend t))
+          (push elem-overlay-start hl-block-overlay)
+          (push elem-overlay-end hl-block-overlay)
+          (setq start-prev start)
+          (setq end-prev end))
+        (setq i (1+ i))))))
 
 
 ;; ---------------------------------------------------------------------------
