@@ -81,7 +81,7 @@ PT is typically the '(point)'."
         (hl-block--syntax-prev-bracket (1- beg))))))
 
 (defun hl-block--find-all-ranges (pt)
-  "Return a list of ranges starting from PT, outer-most to inner-most."
+  "Return ranges starting from PT, outer-most to inner-most."
   (let*
     (
       (beg
@@ -101,7 +101,7 @@ PT is typically the '(point)'."
         (list (list beg end))))))
 
 (defun hl-block--find-all-ranges-or-fallback (pt)
-  "Return a list of ranges starting from PT, outer-most to inner-most (with fallback)."
+  "Return ranges starting from PT, outer-most to inner-most (with fallback)."
   (when-let ((block-list (hl-block--find-all-ranges pt)))
     (if (cdr block-list)
       (reverse block-list)
