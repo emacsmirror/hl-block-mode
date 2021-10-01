@@ -97,15 +97,15 @@ PT is typically the '(point)'."
           (hl-block--find-all-ranges beg))))
     (when beg
       (if range-prev
-        (cons (list beg end) range-prev)
-        (list (list beg end))))))
+        (cons (cons beg end) range-prev)
+        (list (cons beg end))))))
 
 (defun hl-block--find-all-ranges-or-fallback (pt)
   "Return ranges starting from PT, outer-most to inner-most (with fallback)."
   (when-let ((block-list (hl-block--find-all-ranges pt)))
     (if (cdr block-list)
       (reverse block-list)
-      (cons (list (point-min) (point-max)) block-list))))
+      (cons (cons (point-min) (point-max)) block-list))))
 
 (defun hl-block--color-values-as-string (color)
   "Build a color from COLOR.
@@ -134,39 +134,45 @@ Inverse of `color-values'."
 (defun hl-block--overlay-refresh ()
   "Update the overlays based on the cursor location."
   (hl-block--overlay-clear)
-  (when-let ((block-list (save-excursion (hl-block--find-all-ranges-or-fallback (point)))))
-    (let*
-      (
-        (beg-prev (nth 0 (nth 0 block-list)))
-        (end-prev (nth 1 (nth 0 block-list)))
-        (block-list-len (length block-list))
-        (bg-color (apply 'vector (color-values (face-attribute 'default :background))))
-        (bg-color-tint (apply 'vector (color-values hl-block-color-tint)))
-        ;; Check dark background is light/dark.
-        (do-highlight (> 98304 (+ (aref bg-color 0) (aref bg-color 1) (aref bg-color 2))))
-        ;; Iterator.
-        (i 0))
+  (let ((block-list (save-excursion (hl-block--find-all-ranges-or-fallback (point)))))
+    (when block-list
+      (let*
+        (
+          (block-list-len (length block-list))
+          (bg-color (apply 'vector (color-values (face-attribute 'default :background))))
+          (bg-color-tint (apply 'vector (color-values hl-block-color-tint)))
+          ;; Check dark background is light/dark.
+          (do-highlight (> 98304 (+ (aref bg-color 0) (aref bg-color 1) (aref bg-color 2))))
+          ;; Iterator.
+          (i 0))
+        (pcase-let ((`(,beg-prev . ,end-prev) (pop block-list)))
+          (while block-list
+            (pcase-let ((`(,beg . ,end) (pop block-list)))
+              (let
+                (
+                  (elem-overlay-beg (make-overlay beg beg-prev))
+                  (elem-overlay-end (make-overlay end-prev end)))
 
-      (dolist (elem_range (cdr block-list))
-        (let*
-          (
-            (i-tint (- block-list-len i))
-            (beg (nth 0 elem_range))
-            (end (nth 1 elem_range))
-            (elem-overlay-beg (make-overlay beg beg-prev))
-            (elem-overlay-end (make-overlay end-prev end))
-            (bg-color-blend
-              (hl-block--color-values-as-string
-                (if do-highlight
-                  (hl-block--color-tint-add bg-color bg-color-tint i-tint)
-                  (hl-block--color-tint-sub bg-color bg-color-tint i-tint)))))
-          (overlay-put elem-overlay-beg 'face `(:background ,bg-color-blend :extend t))
-          (overlay-put elem-overlay-end 'face `(:background ,bg-color-blend :extend t))
-          (push elem-overlay-beg hl-block-overlay)
-          (push elem-overlay-end hl-block-overlay)
-          (setq beg-prev beg)
-          (setq end-prev end))
-        (setq i (1+ i))))))
+                (let
+                  ( ;; Calculate the face with the tint color at this highlight level.
+                    (hl-face
+                      (list
+                        :background
+                        (hl-block--color-values-as-string
+                          (let ((i-tint (- block-list-len i)))
+                            (if do-highlight
+                              (hl-block--color-tint-add bg-color bg-color-tint i-tint)
+                              (hl-block--color-tint-sub bg-color bg-color-tint i-tint))))
+                        :extend t)))
+
+                  (overlay-put elem-overlay-beg 'face hl-face)
+                  (overlay-put elem-overlay-end 'face hl-face))
+
+                (push elem-overlay-beg hl-block-overlay)
+                (push elem-overlay-end hl-block-overlay)
+                (setq beg-prev beg)
+                (setq end-prev end))
+              (setq i (1+ i)))))))))
 
 
 ;; ---------------------------------------------------------------------------
