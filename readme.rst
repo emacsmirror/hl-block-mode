@@ -20,6 +20,8 @@ Options
    (float) delay in seconds until the drawing the block scope.
 :hl-block-color-tint:
    (color) color tint for each level.
+:hl-block-multi-line:
+   Skip highlighting blocks that begin and end on the same line.
 
 TODO
 ====

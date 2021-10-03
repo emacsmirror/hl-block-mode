@@ -57,6 +57,13 @@ Set to nil to use all brackets."
   :group 'hl-block-mode
   :type 'float)
 
+(defcustom hl-block-multi-line nil
+  "Skip highlighting nested blocks on the same line.
+
+Useful for languages that use S-expressions to avoid overly nested highlighting."
+  :group 'hl-block-mode
+  :type 'boolean)
+
 (defcustom hl-block-mode-lighter ""
   "Lighter for option `hl-block-mode'."
   :group 'hl-block-mode
@@ -100,12 +107,20 @@ PT is typically the '(point)'."
         (cons (cons beg end) range-prev)
         (list (cons beg end))))))
 
-(defun hl-block--find-all-ranges-or-fallback (pt)
-  "Return ranges starting from PT, outer-most to inner-most (with fallback)."
-  (when-let ((block-list (hl-block--find-all-ranges pt)))
-    (if (cdr block-list)
-      (reverse block-list)
-      (cons (cons (point-min) (point-max)) block-list))))
+(defun hl-block--syntax-skip-to-multi-line ()
+  "Move point to the first multi-line block.
+
+The point will only ever be moved backward."
+  (let
+    (
+      (line-min (line-beginning-position))
+      (line-max (line-end-position))
+      (beg (point))
+      (end (point)))
+    (while (and beg (>= beg line-min) end (<= end line-max))
+      (setq beg (ignore-errors (elt (syntax-ppss beg) 1)))
+      (when beg
+        (setq end (ignore-errors (scan-sexps beg 1)))))))
 
 (defun hl-block--color-values-as-string (color)
   "Build a color from COLOR.
@@ -134,7 +149,19 @@ Inverse of `color-values'."
 (defun hl-block--overlay-refresh ()
   "Update the overlays based on the cursor location."
   (hl-block--overlay-clear)
-  (let ((block-list (save-excursion (hl-block--find-all-ranges-or-fallback (point)))))
+  (let
+    (
+      (block-list
+        (save-excursion
+          (when hl-block-multi-line
+            (hl-block--syntax-skip-to-multi-line))
+          (hl-block--find-all-ranges (point)))))
+
+    (when block-list
+      (if (cdr block-list)
+        (setq block-list (reverse block-list))
+        (cons (cons (point-min) (point-max)) block-list)))
+
     (when block-list
       (let*
         (
