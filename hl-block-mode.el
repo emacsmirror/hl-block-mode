@@ -55,7 +55,7 @@ Set to nil to use all brackets."
 (defcustom hl-block-color-tint "#040404"
   "Color to add/subtract from the background each scope step."
   :group 'hl-block-mode
-  :type 'float)
+  :type 'color)
 
 (defcustom hl-block-multi-line nil
   "Skip highlighting nested blocks on the same line.
