@@ -96,8 +96,9 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 
 (defvar-local hl-block-overlay nil)
 
+
 ;; ---------------------------------------------------------------------------
-;; Internal Functions/Macros
+;; Internal Bracket Functions
 
 (defun hl-block--syntax-prev-bracket (pt)
   "A version of `syntax-ppss' to match curly braces.
@@ -155,10 +156,14 @@ The point will only ever be moved backward."
         (setq end (ignore-errors (scan-sexps beg 1)))))))
 
 
+;; ---------------------------------------------------------------------------
+;; Internal Color Tint (Draw Style)
+
 (defun hl-block--color-values-as-string (color)
   "Build a color from COLOR.
 Inverse of `color-values'."
   (format "#%02x%02x%02x" (ash (aref color 0) -8) (ash (aref color 1) -8) (ash (aref color 2) -8)))
+
 
 (defun hl-block--color-tint-add (a b tint)
   "Tint color lighter from A to B by TINT amount."
@@ -167,17 +172,13 @@ Inverse of `color-values'."
     (+ (aref a 1) (* tint (aref b 1)))
     (+ (aref a 2) (* tint (aref b 2)))))
 
+
 (defun hl-block--color-tint-sub (a b tint)
   "Tint colors darker from A to B by TINT amount."
   (vector
     (- (aref a 0) (* tint (aref b 0)))
     (- (aref a 1) (* tint (aref b 1)))
     (- (aref a 2) (* tint (aref b 2)))))
-
-(defun hl-block--overlay-clear ()
-  "Clear all overlays."
-  (mapc 'delete-overlay hl-block-overlay)
-  (setq hl-block-overlay nil))
 
 
 (defun hl-block--overlay-create-color-tint (block-list)
@@ -222,6 +223,9 @@ Argument BLOCK-LIST represents start-end ranges of braces."
           (setq i (1+ i)))))))
 
 
+;; ---------------------------------------------------------------------------
+;; Internal Color Tint (Draw Style)
+
 (defun hl-block--overlay-create-bracket (block-list)
   "Update the overlays based on the cursor location.
 Argument BLOCK-LIST represents start-end ranges of braces."
@@ -236,6 +240,15 @@ Argument BLOCK-LIST represents start-end ranges of braces."
         (overlay-put elem-overlay-end 'face hl-block-bracket-face)
         (push elem-overlay-end hl-block-overlay)
         (push elem-overlay-beg hl-block-overlay)))))
+
+
+;; ---------------------------------------------------------------------------
+;; Internal Refresh Function
+
+(defun hl-block--overlay-clear ()
+  "Clear all overlays."
+  (mapc 'delete-overlay hl-block-overlay)
+  (setq hl-block-overlay nil))
 
 
 (defun hl-block--overlay-refresh ()
