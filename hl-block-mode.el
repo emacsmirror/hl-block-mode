@@ -57,12 +57,31 @@ Set to nil to use all brackets."
   :group 'hl-block-mode
   :type 'color)
 
+(defcustom hl-block-bracket-face '((t (:inverse-video t)))
+  "Face used when `hl-block-style' is set to `bracket'."
+  :type 'face
+  :group 'widget-faces)
+
 (defcustom hl-block-multi-line nil
   "Skip highlighting nested blocks on the same line.
 
 Useful for languages that use S-expressions to avoid overly nested highlighting."
   :group 'hl-block-mode
   :type 'boolean)
+
+(defcustom hl-block-single-level nil
+  "Only highlight a single level."
+  :group 'hl-block-mode
+  :type 'boolean)
+
+(defcustom hl-block-style 'color-tint
+  "Only highlight a single level."
+  :group 'hl-block-mode
+  :type
+  '
+  (choice
+    (symbol :tag "Tint the background at each level `hl-block-color-tint'." color-tint)
+    (symbol :tag "Highlight surrounding brackets using `hl-block-bracket-face'." bracket)))
 
 (defcustom hl-block-mode-lighter ""
   "Lighter for option `hl-block-mode'."
@@ -87,25 +106,36 @@ PT is typically the '(point)'."
         beg
         (hl-block--syntax-prev-bracket (1- beg))))))
 
-(defun hl-block--find-all-ranges (pt)
-  "Return ranges starting from PT, outer-most to inner-most."
-  (let*
+
+(defun hl-block--find-range (pt)
+  "Return range around PT or nil."
+  (let
     (
       (beg
-        ;; find brackets
-        (if hl-block-bracket
-          (hl-block--syntax-prev-bracket pt)
-          (ignore-errors (elt (syntax-ppss pt) 1))))
-      (end
-        (when beg
-          (or (ignore-errors (scan-sexps beg 1)) pt)))
-      (range-prev
-        (when beg
-          (hl-block--find-all-ranges beg))))
+        (cond
+          (hl-block-bracket
+            (hl-block--syntax-prev-bracket pt))
+          (t
+            (ignore-errors (elt (syntax-ppss pt) 1))))))
     (when beg
-      (if range-prev
-        (cons (cons beg end) range-prev)
-        (list (cons beg end))))))
+      (let ((end (or (ignore-errors (scan-sexps beg 1)) pt)))
+        (cons beg end)))))
+
+
+(defun hl-block--find-all-ranges (pt)
+  "Return ranges starting from PT, outer-most to inner-most."
+  (let ((range (hl-block--find-range pt)))
+    (when range
+      ;; When the previous range is nil, this simply terminates the list.
+      (cons range (hl-block--find-all-ranges (car range))))))
+
+
+(defun hl-block--find-single-range (pt)
+  "Return ranges starting from PT, only a single level."
+  (let ((range (hl-block--find-range pt)))
+    (when range
+      (list range))))
+
 
 (defun hl-block--syntax-skip-to-multi-line ()
   "Move point to the first multi-line block.
@@ -121,6 +151,7 @@ The point will only ever be moved backward."
       (setq beg (ignore-errors (elt (syntax-ppss beg) 1)))
       (when beg
         (setq end (ignore-errors (scan-sexps beg 1)))))))
+
 
 (defun hl-block--color-values-as-string (color)
   "Build a color from COLOR.
@@ -146,6 +177,65 @@ Inverse of `color-values'."
   (mapc 'delete-overlay hl-block-overlay)
   (setq hl-block-overlay nil))
 
+
+(defun hl-block--overlay-create-color-tint (block-list)
+  "Update the overlays based on the cursor location.
+Argument BLOCK-LIST represents start-end ranges of braces."
+  (let*
+    (
+      (block-list-len (length block-list))
+      (bg-color (apply 'vector (color-values (face-attribute 'default :background))))
+      (bg-color-tint (apply 'vector (color-values hl-block-color-tint)))
+      ;; Check dark background is light/dark.
+      (do-highlight (> 98304 (+ (aref bg-color 0) (aref bg-color 1) (aref bg-color 2))))
+      ;; Iterator.
+      (i 0))
+    (pcase-let ((`(,beg-prev . ,end-prev) (pop block-list)))
+      (while block-list
+        (pcase-let ((`(,beg . ,end) (pop block-list)))
+          (let
+            (
+              (elem-overlay-beg (make-overlay beg beg-prev))
+              (elem-overlay-end (make-overlay end-prev end)))
+
+            (let
+              ( ;; Calculate the face with the tint color at this highlight level.
+                (hl-face
+                  (list
+                    :background
+                    (hl-block--color-values-as-string
+                      (let ((i-tint (- block-list-len i)))
+                        (if do-highlight
+                          (hl-block--color-tint-add bg-color bg-color-tint i-tint)
+                          (hl-block--color-tint-sub bg-color bg-color-tint i-tint))))
+                    :extend t)))
+
+              (overlay-put elem-overlay-beg 'face hl-face)
+              (overlay-put elem-overlay-end 'face hl-face))
+
+            (push elem-overlay-beg hl-block-overlay)
+            (push elem-overlay-end hl-block-overlay)
+            (setq beg-prev beg)
+            (setq end-prev end))
+          (setq i (1+ i)))))))
+
+
+(defun hl-block--overlay-create-bracket (block-list)
+  "Update the overlays based on the cursor location.
+Argument BLOCK-LIST represents start-end ranges of braces."
+  ;; hl-block-bracket-face
+  (while block-list
+    (pcase-let ((`(,beg . ,end) (pop block-list)))
+      (let
+        (
+          (elem-overlay-beg (make-overlay beg (1+ beg)))
+          (elem-overlay-end (make-overlay (1- end) end)))
+        (overlay-put elem-overlay-beg 'face hl-block-bracket-face)
+        (overlay-put elem-overlay-end 'face hl-block-bracket-face)
+        (push elem-overlay-end hl-block-overlay)
+        (push elem-overlay-beg hl-block-overlay)))))
+
+
 (defun hl-block--overlay-refresh ()
   "Update the overlays based on the cursor location."
   (hl-block--overlay-clear)
@@ -155,51 +245,25 @@ Inverse of `color-values'."
         (save-excursion
           (when hl-block-multi-line
             (hl-block--syntax-skip-to-multi-line))
-          (hl-block--find-all-ranges (point)))))
+          (cond
+            (hl-block-single-level
+              (hl-block--find-single-range (point)))
+            (t
+              (hl-block--find-all-ranges (point)))))))
 
     (when block-list
-      (if (cdr block-list)
-        (setq block-list (reverse block-list))
-        (cons (cons (point-min) (point-max)) block-list)))
+      (setq block-list
+        (if (cdr block-list)
+          (reverse block-list)
+          (cons (cons (point-min) (point-max)) block-list)))
 
-    (when block-list
-      (let*
-        (
-          (block-list-len (length block-list))
-          (bg-color (apply 'vector (color-values (face-attribute 'default :background))))
-          (bg-color-tint (apply 'vector (color-values hl-block-color-tint)))
-          ;; Check dark background is light/dark.
-          (do-highlight (> 98304 (+ (aref bg-color 0) (aref bg-color 1) (aref bg-color 2))))
-          ;; Iterator.
-          (i 0))
-        (pcase-let ((`(,beg-prev . ,end-prev) (pop block-list)))
-          (while block-list
-            (pcase-let ((`(,beg . ,end) (pop block-list)))
-              (let
-                (
-                  (elem-overlay-beg (make-overlay beg beg-prev))
-                  (elem-overlay-end (make-overlay end-prev end)))
-
-                (let
-                  ( ;; Calculate the face with the tint color at this highlight level.
-                    (hl-face
-                      (list
-                        :background
-                        (hl-block--color-values-as-string
-                          (let ((i-tint (- block-list-len i)))
-                            (if do-highlight
-                              (hl-block--color-tint-add bg-color bg-color-tint i-tint)
-                              (hl-block--color-tint-sub bg-color bg-color-tint i-tint))))
-                        :extend t)))
-
-                  (overlay-put elem-overlay-beg 'face hl-face)
-                  (overlay-put elem-overlay-end 'face hl-face))
-
-                (push elem-overlay-beg hl-block-overlay)
-                (push elem-overlay-end hl-block-overlay)
-                (setq beg-prev beg)
-                (setq end-prev end))
-              (setq i (1+ i)))))))))
+      (cond
+        ((eq hl-block-style 'color-tint)
+          (hl-block--overlay-create-color-tint block-list))
+        ((eq hl-block-style 'bracket)
+          (hl-block--overlay-create-bracket block-list))
+        (t
+          (error "Unknown style %S" hl-block-style))))))
 
 
 ;; ---------------------------------------------------------------------------
