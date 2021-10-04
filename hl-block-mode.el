@@ -52,16 +52,6 @@ Set to nil to use all brackets."
   :group 'hl-block-mode
   :type 'float)
 
-(defcustom hl-block-color-tint "#040404"
-  "Color to add/subtract from the background each scope step."
-  :group 'hl-block-mode
-  :type 'color)
-
-(defcustom hl-block-bracket-face '((t (:inverse-video t)))
-  "Face used when `hl-block-style' is set to `bracket'."
-  :type 'face
-  :group 'widget-faces)
-
 (defcustom hl-block-multi-line nil
   "Skip highlighting nested blocks on the same line.
 
@@ -82,6 +72,18 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
   (choice
     (symbol :tag "Tint the background at each level `hl-block-color-tint'." color-tint)
     (symbol :tag "Highlight surrounding brackets using `hl-block-bracket-face'." bracket)))
+
+;; For `color-tint' draw style.
+(defcustom hl-block-color-tint "#040404"
+  "Color to add/subtract from the background each scope step."
+  :group 'hl-block-mode
+  :type 'color)
+
+;; For `bracket' draw style.
+(defcustom hl-block-bracket-face '((t (:inverse-video t)))
+  "Face used when `hl-block-style' is set to `bracket'."
+  :type 'face
+  :group 'widget-faces)
 
 (defcustom hl-block-mode-lighter ""
   "Lighter for option `hl-block-mode'."
