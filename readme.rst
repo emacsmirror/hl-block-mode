@@ -25,11 +25,13 @@ Options
    The draw-style used to highlight blocks.
 
    ``'color-tint``:
+      Apply a color tint to the background, increasing for each level.
 
       ``hl-block-color-tint``: ``"#040404"``
          (color) color tint for each level.
 
    ``'bracket``:
+      Highlight each bracket using a custom face, without changing the background.
 
       ``hl-block-bracket-face``: ``'((t (:inverse-video t)))``
          The face used to highlight brackets.
