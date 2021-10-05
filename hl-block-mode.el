@@ -261,15 +261,15 @@ Argument BLOCK-LIST represents start-end ranges of braces."
               (hl-block--find-all-ranges (point)))))))
 
     (when block-list
-      (setq block-list
-        (cond
-          ((cdr block-list)
-            (reverse block-list))
-          (t
-            (cons (cons (point-min) (point-max)) block-list))))
-
       (cond
         ((eq hl-block-style 'color-tint)
+          ;; Ensure outer bounds (when only one pair exists).
+          (setq block-list
+            (cond
+              ((cdr block-list)
+                (reverse block-list))
+              (t
+                (cons (cons (point-min) (point-max)) block-list))))
           (hl-block--overlay-create-color-tint block-list))
         ((eq hl-block-style 'bracket)
           (hl-block--overlay-create-bracket block-list))
