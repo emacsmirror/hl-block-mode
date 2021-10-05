@@ -41,7 +41,7 @@
 
 (defgroup hl-block nil "Highlight nested blocks or brackets." :group 'convenience)
 
-(defcustom hl-block-bracket ?{
+(defcustom hl-block-bracket ?\{
   "Characters to use as a starting bracket (defaults to '{').
 Set to nil to use all brackets, a list of starting brackets is also supported."
   :type 'symbol)
@@ -82,10 +82,7 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 ;; ---------------------------------------------------------------------------
 ;; Internal Variables
 
-(defvar-local hl-block-overlay nil)
-;; Created when the mode is enabled (based on the syntax table).
-(defvar-local hl-block-bracket-local nil)
-
+(defvar-local hl-block--overlay nil)
 
 ;; ---------------------------------------------------------------------------
 ;; Internal Bracket Functions
@@ -96,7 +93,7 @@ PT is typically the '(point)'."
   (let ((beg (ignore-errors (elt (syntax-ppss pt) 1))))
     (when beg
       (cond
-        ((memq (char-after beg) hl-block-bracket-local)
+        ((memq (char-after beg) hl-block-bracket)
           beg)
         (t
           (hl-block--syntax-prev-bracket (1- beg)))))))
@@ -108,7 +105,7 @@ PT is typically the '(point)'."
     (
       (beg
         (cond
-          (hl-block-bracket-local
+          (hl-block-bracket
             (hl-block--syntax-prev-bracket pt))
           (t
             (ignore-errors (elt (syntax-ppss pt) 1))))))
@@ -210,8 +207,8 @@ Argument BLOCK-LIST represents start-end ranges of braces."
               (overlay-put elem-overlay-beg 'face hl-face)
               (overlay-put elem-overlay-end 'face hl-face))
 
-            (push elem-overlay-beg hl-block-overlay)
-            (push elem-overlay-end hl-block-overlay)
+            (push elem-overlay-beg hl-block--overlay)
+            (push elem-overlay-end hl-block--overlay)
             (setq beg-prev beg)
             (setq end-prev end))
           (setq i (1+ i)))))))
@@ -232,8 +229,8 @@ Argument BLOCK-LIST represents start-end ranges of braces."
           (elem-overlay-end (make-overlay (1- end) end)))
         (overlay-put elem-overlay-beg 'face hl-block-bracket-face)
         (overlay-put elem-overlay-end 'face hl-block-bracket-face)
-        (push elem-overlay-end hl-block-overlay)
-        (push elem-overlay-beg hl-block-overlay)))))
+        (push elem-overlay-end hl-block--overlay)
+        (push elem-overlay-beg hl-block--overlay)))))
 
 
 ;; ---------------------------------------------------------------------------
@@ -241,8 +238,8 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--overlay-clear ()
   "Clear all overlays."
-  (mapc 'delete-overlay hl-block-overlay)
-  (setq hl-block-overlay nil))
+  (mapc 'delete-overlay hl-block--overlay)
+  (setq hl-block--overlay nil))
 
 
 (defun hl-block--overlay-refresh ()
@@ -388,26 +385,24 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
   ;; Setup brackets:
   ;; Keep as nil to match all brackets.
-  (setq hl-block-bracket-local nil)
-  (when hl-block-bracket
-    (let
-      (
-        (bracket-list
-          (cond
-            ((listp hl-block-bracket)
-              hl-block-bracket)
-            (t
-              (list hl-block-bracket)))))
-      (while bracket-list
-        (let ((ch (pop bracket-list)))
+  (let ((bracket-orig hl-block-bracket))
+    ;; Make a local, sanitized version of this variable.
+    (setq-local hl-block-bracket nil)
+    (when bracket-orig
+      ;; Support single values.
+      (unless (listp bracket-orig)
+        (setq bracket-orig (list bracket-orig)))
+      ;; Filter for recognized values.
+      (while bracket-orig
+        (let ((ch (pop bracket-orig)))
           (when (eq ?\( (char-syntax ch))
-            (push ch hl-block-bracket-local)))))))
+            (push ch hl-block-bracket)))))))
 
 (defun hl-block-mode-disable ()
   "Turn off 'hl-block-mode' for the current buffer."
   (hl-block--overlay-clear)
-  (kill-local-variable 'hl-block-overlay)
-  (kill-local-variable 'hl-block-bracket-local)
+  (kill-local-variable 'hl-block--overlay)
+  (kill-local-variable 'hl-block-bracket)
   (hl-block--time-buffer-local-disable))
 
 (defun hl-block-mode-turn-on ()
