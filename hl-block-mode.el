@@ -40,8 +40,8 @@
 ;; Custom Variables
 
 (defcustom hl-block-bracket ?{
-  "Character to use as a starting bracket (defaults to '{').
-Set to nil to use all brackets."
+  "Characters to use as a starting bracket (defaults to '{').
+Set to nil to use all brackets, a list of starting brackets is also supported."
   :group 'hl-block-mode
   :type 'symbol)
 
@@ -93,6 +93,8 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 ;; Internal Variables
 
 (defvar-local hl-block-overlay nil)
+;; Created when the mode is enabled (based on the syntax table).
+(defvar-local hl-block-bracket-local nil)
 
 
 ;; ---------------------------------------------------------------------------
@@ -104,7 +106,7 @@ PT is typically the '(point)'."
   (let ((beg (ignore-errors (elt (syntax-ppss pt) 1))))
     (when beg
       (cond
-        ((char-equal hl-block-bracket (char-after beg))
+        ((memq (char-after beg) hl-block-bracket-local)
           beg)
         (t
           (hl-block--syntax-prev-bracket (1- beg)))))))
@@ -116,7 +118,7 @@ PT is typically the '(point)'."
     (
       (beg
         (cond
-          (hl-block-bracket
+          (hl-block-bracket-local
             (hl-block--syntax-prev-bracket pt))
           (t
             (ignore-errors (elt (syntax-ppss pt) 1))))))
@@ -392,12 +394,30 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block-mode-enable ()
   "Turn on 'hl-block-mode' for the current buffer."
-  (hl-block--time-buffer-local-enable))
+  (hl-block--time-buffer-local-enable)
+
+  ;; Setup brackets:
+  ;; Keep as nil to match all brackets.
+  (setq hl-block-bracket-local nil)
+  (when hl-block-bracket
+    (let
+      (
+        (bracket-list
+          (cond
+            ((listp hl-block-bracket)
+              hl-block-bracket)
+            (t
+              (list hl-block-bracket)))))
+      (while bracket-list
+        (let ((ch (pop bracket-list)))
+          (when (eq ?\( (char-syntax ch))
+            (push ch hl-block-bracket-local)))))))
 
 (defun hl-block-mode-disable ()
   "Turn off 'hl-block-mode' for the current buffer."
   (hl-block--overlay-clear)
   (kill-local-variable 'hl-block-overlay)
+  (kill-local-variable 'hl-block-bracket-local)
   (hl-block--time-buffer-local-disable))
 
 (defun hl-block-mode-turn-on ()

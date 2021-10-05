@@ -14,7 +14,9 @@ Options
 =======
 
 ``hl-block-bracket``: ``{``.
-   (symbol) bracket to use, set to ``nil`` to match all bracket types.
+   (character) bracket to use, set to ``nil`` to match all bracket types.
+
+   A list of characters is also supported.
 ``hl-block-delay``: ``0.2``
    (float) delay in seconds until the drawing the block scope.
 ``hl-block-multi-line``: ``t``
