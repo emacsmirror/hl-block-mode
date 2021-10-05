@@ -41,10 +41,9 @@
 
 (defgroup hl-block nil "Highlight nested blocks or brackets." :group 'convenience)
 
-(defcustom hl-block-bracket ?\{
-  "Characters to use as a starting bracket (defaults to '{').
-Set to nil to use all brackets, a list of starting brackets is also supported."
-  :type 'symbol)
+(defcustom hl-block-bracket "{"
+  "Characters to use as a starting bracket. Set to nil to use all brackets."
+  :type '(or null string))
 
 (defcustom hl-block-delay 0.2 "Idle time to wait before highlighting (in seconds)." :type 'float)
 
@@ -72,7 +71,7 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
   :type 'color)
 
 ;; For `bracket' draw style.
-(defcustom hl-block-bracket-face '(t (:inverse-video t))
+(defcustom hl-block-bracket-face '(:inverse-video t)
   "Face used when `hl-block-style' is set to `bracket'."
   :type 'face)
 
@@ -384,14 +383,12 @@ Argument BLOCK-LIST represents start-end ranges of braces."
   (hl-block--time-buffer-local-enable)
 
   ;; Setup brackets:
-  ;; Keep as nil to match all brackets.
-  (let ((bracket-orig hl-block-bracket))
+  ;; Keep as nil to match all brackets,
+  ;; use a string to convert the string to a list.
+  (let ((bracket-orig (append hl-block-bracket nil)))
     ;; Make a local, sanitized version of this variable.
     (setq-local hl-block-bracket nil)
     (when bracket-orig
-      ;; Support single values.
-      (unless (listp bracket-orig)
-        (setq bracket-orig (list bracket-orig)))
       ;; Filter for recognized values.
       (while bracket-orig
         (let ((ch (pop bracket-orig)))

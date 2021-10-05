@@ -13,10 +13,8 @@ Available via `melpa <https://melpa.org/#/hl-block-mode>`__.
 Options
 =======
 
-``hl-block-bracket``: ``{``.
-   (character) bracket to use, set to ``nil`` to match all bracket types.
-
-   A list of characters is also supported.
+``hl-block-bracket``: ``"{"``.
+   (string or null) bracket to use, set to ``nil`` to match all bracket types.
 ``hl-block-delay``: ``0.2``
    (float) delay in seconds until the drawing the block scope.
 ``hl-block-multi-line``: ``t``
@@ -35,7 +33,7 @@ Options
    ``'bracket``:
       Highlight each bracket using a custom face, without changing the background.
 
-      ``hl-block-bracket-face``: ``'((t (:inverse-video t)))``
+      ``hl-block-bracket-face``: ``'(t (:inverse-video t))``
          The face used to highlight brackets.
 
 
