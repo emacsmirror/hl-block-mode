@@ -78,7 +78,7 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
   :type 'color)
 
 ;; For `bracket' draw style.
-(defcustom hl-block-bracket-face '((t (:inverse-video t)))
+(defcustom hl-block-bracket-face '(t (:inverse-video t))
   "Face used when `hl-block-style' is set to `bracket'."
   :type 'face
   :group 'widget-faces)
