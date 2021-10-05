@@ -39,32 +39,27 @@
 ;; ---------------------------------------------------------------------------
 ;; Custom Variables
 
+(defgroup hl-block nil "Highlight nested blocks or brackets." :group 'convenience)
+
 (defcustom hl-block-bracket ?{
   "Characters to use as a starting bracket (defaults to '{').
 Set to nil to use all brackets, a list of starting brackets is also supported."
-  :group 'hl-block-mode
   :type 'symbol)
 
-(defcustom hl-block-delay 0.2
-  "Idle time to wait before highlighting."
-  :group 'hl-block-mode
-  :type 'float)
+(defcustom hl-block-delay 0.2 "Idle time to wait before highlighting (in seconds)." :type 'float)
 
 (defcustom hl-block-multi-line nil
   "Skip highlighting nested blocks on the same line.
 
 Useful for languages that use S-expressions to avoid overly nested highlighting."
-  :group 'hl-block-mode
   :type 'boolean)
 
 (defcustom hl-block-single-level nil
-  "Only highlight a single level."
-  :group 'hl-block-mode
+  "Only highlight a single level, otherwise highlight all levels."
   :type 'boolean)
 
 (defcustom hl-block-style 'color-tint
   "Only highlight a single level."
-  :group 'hl-block-mode
   :type
   '
   (choice
@@ -74,19 +69,14 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 ;; For `color-tint' draw style.
 (defcustom hl-block-color-tint "#040404"
   "Color to add/subtract from the background each scope step."
-  :group 'hl-block-mode
   :type 'color)
 
 ;; For `bracket' draw style.
 (defcustom hl-block-bracket-face '(t (:inverse-video t))
   "Face used when `hl-block-style' is set to `bracket'."
-  :type 'face
-  :group 'widget-faces)
+  :type 'face)
 
-(defcustom hl-block-mode-lighter ""
-  "Lighter for option `hl-block-mode'."
-  :group 'hl-block-mode
-  :type 'string)
+(defcustom hl-block-mode-lighter "" "Lighter for option `hl-block-mode'." :type 'string)
 
 
 ;; ---------------------------------------------------------------------------
