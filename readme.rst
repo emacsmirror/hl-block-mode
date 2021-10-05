@@ -44,13 +44,10 @@ This example shows how this package can be used to highlight only the surroundin
 
    (use-package hl-block-mode
      :commands (hl-block-mode)
-
      :config
-     (setq hl-block-bracket nil)
-     (setq hl-block-multi-line t)
-     (setq hl-block-single-level t)
-     (setq hl-block-style 'bracket)
-
+     (setq hl-block-bracket nil)    ;; Match all brackets.
+     (setq hl-block-single-level t) ;; Only one pair of brackets.
+     (setq hl-block-style 'bracket) ;; Highlight only the brackets.
      :hook ((prog-mode) . hl-block-mode))
 
 
