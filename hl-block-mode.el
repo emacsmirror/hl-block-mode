@@ -27,10 +27,8 @@
 
 ;;; Usage
 
-;; (hl-block-mode)        ; activate in the current buffer
-;; (global-hl-block-mode) ; activate globally for all buffers
-;;
-;; Currently only curly braces are supported (C-family languages).
+;; (hl-block-mode)        ; activate in the current buffer.
+;; (global-hl-block-mode) ; activate globally for all buffers.
 
 
 ;;; Code:
@@ -105,9 +103,11 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 PT is typically the '(point)'."
   (let ((beg (ignore-errors (elt (syntax-ppss pt) 1))))
     (when beg
-      (if (char-equal hl-block-bracket (char-after beg))
-        beg
-        (hl-block--syntax-prev-bracket (1- beg))))))
+      (cond
+        ((char-equal hl-block-bracket (char-after beg))
+          beg)
+        (t
+          (hl-block--syntax-prev-bracket (1- beg)))))))
 
 
 (defun hl-block--find-range (pt)
@@ -208,9 +208,11 @@ Argument BLOCK-LIST represents start-end ranges of braces."
                     :background
                     (hl-block--color-values-as-string
                       (let ((i-tint (- block-list-len i)))
-                        (if do-highlight
-                          (hl-block--color-tint-add bg-color bg-color-tint i-tint)
-                          (hl-block--color-tint-sub bg-color bg-color-tint i-tint))))
+                        (cond
+                          (do-highlight
+                            (hl-block--color-tint-add bg-color bg-color-tint i-tint))
+                          (t
+                            (hl-block--color-tint-sub bg-color bg-color-tint i-tint)))))
                     :extend t)))
 
               (overlay-put elem-overlay-beg 'face hl-face)
@@ -268,9 +270,11 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
     (when block-list
       (setq block-list
-        (if (cdr block-list)
-          (reverse block-list)
-          (cons (cons (point-min) (point-max)) block-list)))
+        (cond
+          ((cdr block-list)
+            (reverse block-list))
+          (t
+            (cons (cons (point-min) (point-max)) block-list))))
 
       (cond
         ((eq hl-block-style 'color-tint)
