@@ -415,7 +415,6 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 ;;;###autoload
 (define-minor-mode hl-block-mode
   "Highlight block under the cursor."
-  :group 'hl-block-mode
   :global nil
   :lighter hl-block-mode-lighter
 
@@ -431,8 +430,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 (define-globalized-minor-mode
   global-hl-block-mode
 
-  hl-block-mode hl-block-mode-turn-on
-  :group 'hl-block-mode)
+  hl-block-mode hl-block-mode-turn-on)
 
 (provide 'hl-block-mode)
 ;; Local Variables:
