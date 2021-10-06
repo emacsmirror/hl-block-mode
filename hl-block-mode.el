@@ -106,7 +106,9 @@ PT is typically the '(point)'."
           (t
             (ignore-errors (elt (syntax-ppss pt) 1))))))
     (when beg
-      (let ((end (or (ignore-errors (scan-sexps beg 1)) pt)))
+      ;; Note that `end' may be nil for un-matched brackets.
+      ;; The caller must handle this case.
+      (let ((end (ignore-errors (scan-sexps beg 1))))
         (cons beg end)))))
 
 
@@ -166,7 +168,7 @@ Inverse of `color-values'."
     (- (aref a 2) (* tint (aref b 2)))))
 
 
-(defun hl-block--overlay-create-color-tint (block-list)
+(defun hl-block--overlay-create-color-tint (block-list end-fallback)
   "Update the overlays based on the cursor location.
 Argument BLOCK-LIST represents start-end ranges of braces."
   (let*
@@ -179,8 +181,12 @@ Argument BLOCK-LIST represents start-end ranges of braces."
       ;; Iterator.
       (i 0))
     (pcase-let ((`(,beg-prev . ,end-prev) (pop block-list)))
+      (unless end-prev ;; May be `nil' for un-matched brackets.
+        (setq end-prev end-fallback))
       (while block-list
         (pcase-let ((`(,beg . ,end) (pop block-list)))
+          (unless end ;; May be `nil' for un-matched brackets.
+            (setq end end-fallback))
           (let
             (
               (elem-overlay-beg (make-overlay beg beg-prev))
@@ -219,14 +225,13 @@ Argument BLOCK-LIST represents start-end ranges of braces."
   ;; hl-block-bracket-face
   (while block-list
     (pcase-let ((`(,beg . ,end) (pop block-list)))
-      (let
-        (
-          (elem-overlay-beg (make-overlay beg (1+ beg)))
-          (elem-overlay-end (make-overlay (1- end) end)))
+      (let ((elem-overlay-beg (make-overlay beg (1+ beg))))
         (overlay-put elem-overlay-beg 'face hl-block-bracket-face)
-        (overlay-put elem-overlay-end 'face hl-block-bracket-face)
-        (push elem-overlay-end hl-block--overlay)
-        (push elem-overlay-beg hl-block--overlay)))))
+        (push elem-overlay-beg hl-block--overlay)
+        (when end ;; May be `nil' for un-matched brackets.
+          (let ((elem-overlay-end (make-overlay (1- end) end)))
+            (overlay-put elem-overlay-end 'face hl-block-bracket-face)
+            (push elem-overlay-end hl-block--overlay)))))))
 
 
 ;; ---------------------------------------------------------------------------
@@ -263,7 +268,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
                 (reverse block-list))
               (t
                 (cons (cons (point-min) (point-max)) block-list))))
-          (hl-block--overlay-create-color-tint block-list))
+          (hl-block--overlay-create-color-tint block-list (point)))
         ((eq hl-block-style 'bracket)
           (hl-block--overlay-create-bracket block-list))
         (t
