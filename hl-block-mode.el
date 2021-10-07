@@ -39,7 +39,7 @@
 (defgroup hl-block nil "Highlight nested blocks or brackets." :group 'convenience)
 
 (defcustom hl-block-bracket "{"
-  "Characters to use as a starting bracket. Set to nil to use all brackets."
+  "Characters to use as a starting bracket (set to nil to use all brackets)."
   :type '(or null string))
 
 (defcustom hl-block-delay 0.2 "Idle time to wait before highlighting (in seconds)." :type 'float)
@@ -170,7 +170,9 @@ Inverse of `color-values'."
 
 (defun hl-block--overlay-create-color-tint (block-list end-fallback)
   "Update the overlays based on the cursor location.
-Argument BLOCK-LIST represents start-end ranges of braces."
+Argument BLOCK-LIST represents start-end ranges of braces.
+Argument END-FALLBACK is the point used when no matching end bracket is found,
+typically `(point)'."
   (let*
     (
       (block-list-len (length block-list))
@@ -353,7 +355,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
         (setq hl-block--global-timer nil)))))
 
 (defun hl-block--time-reset ()
-  "Run this when the buffer changes."
+  "Run this when the buffer was changed."
   ;; Ensure changing windows doesn't leave other buffers with stale highlight.
   (cond
     ((bound-and-true-p hl-block-mode)
