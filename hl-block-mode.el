@@ -5,7 +5,7 @@
 
 ;; Author: Campbell Barton <ideasman42@gmail.com>
 
-;; URL: https://codeberg.com/ideasman42/emacs-hl-block-mode
+;; URL: https://codeberg.org/ideasman42/emacs-hl-block-mode
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "26.1"))
 
