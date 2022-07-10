@@ -73,7 +73,7 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 
 (defun hl-block--syntax-prev-bracket (pt)
   "A version of `syntax-ppss' to match curly braces.
-PT is typically the '(point)'."
+PT is typically the `(point)'."
   (let ((beg (ignore-errors (elt (syntax-ppss pt) 1))))
     (when beg
       (cond
@@ -371,7 +371,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 ;; Internal Mode Management
 
 (defun hl-block-mode-enable ()
-  "Turn on 'hl-block-mode' for the current buffer."
+  "Turn on `hl-block-mode' for the current buffer."
   (hl-block--time-buffer-local-enable)
 
   ;; Setup brackets:
@@ -388,7 +388,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
             (push ch hl-block-bracket)))))))
 
 (defun hl-block-mode-disable ()
-  "Turn off 'hl-block-mode' for the current buffer."
+  "Turn off `hl-block-mode' for the current buffer."
   (hl-block--overlay-clear)
   (kill-local-variable 'hl-block--overlay)
   (kill-local-variable 'hl-block-bracket)
