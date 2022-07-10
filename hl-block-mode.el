@@ -213,15 +213,14 @@ typically `(point)'."
   "Update the overlays based on the cursor location.
 Argument BLOCK-LIST represents start-end ranges of braces."
   ;; hl-block-bracket-face
-  (while block-list
-    (pcase-let ((`(,beg . ,end) (pop block-list)))
-      (let ((elem-overlay-beg (make-overlay beg (1+ beg))))
-        (overlay-put elem-overlay-beg 'face hl-block-bracket-face)
-        (push elem-overlay-beg hl-block--overlay)
-        (when end ;; May be `nil' for un-matched brackets.
-          (let ((elem-overlay-end (make-overlay (1- end) end)))
-            (overlay-put elem-overlay-end 'face hl-block-bracket-face)
-            (push elem-overlay-end hl-block--overlay)))))))
+  (pcase-dolist (`(,beg . ,end) block-list)
+    (let ((elem-overlay-beg (make-overlay beg (1+ beg))))
+      (overlay-put elem-overlay-beg 'face hl-block-bracket-face)
+      (push elem-overlay-beg hl-block--overlay)
+      (when end ;; May be `nil' for un-matched brackets.
+        (let ((elem-overlay-end (make-overlay (1- end) end)))
+          (overlay-put elem-overlay-end 'face hl-block-bracket-face)
+          (push elem-overlay-end hl-block--overlay))))))
 
 
 ;; ---------------------------------------------------------------------------
