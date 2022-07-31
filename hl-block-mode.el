@@ -18,8 +18,12 @@
 ;; (hl-block-mode)        ; activate in the current buffer.
 ;; (global-hl-block-mode) ; activate globally for all buffers.
 
-
 ;;; Code:
+
+(eval-when-compile
+  ;; For `pcase-dolist'.
+  (require 'pcase))
+
 
 ;; ---------------------------------------------------------------------------
 ;; Custom Variables
