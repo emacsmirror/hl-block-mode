@@ -164,8 +164,8 @@ typically `(point)'."
   (let*
     (
       (block-list-len (length block-list))
-      (bg-color (apply 'vector (color-values (face-attribute 'default :background))))
-      (bg-color-tint (apply 'vector (color-values hl-block-color-tint)))
+      (bg-color (apply #'vector (color-values (face-attribute 'default :background))))
+      (bg-color-tint (apply #'vector (color-values hl-block-color-tint)))
       ;; Check dark background is light/dark.
       (do-highlight (> 98304 (+ (aref bg-color 0) (aref bg-color 1) (aref bg-color 2))))
       ;; Iterator.
