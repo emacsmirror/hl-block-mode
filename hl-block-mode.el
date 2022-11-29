@@ -373,7 +373,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 ;; ---------------------------------------------------------------------------
 ;; Internal Mode Management
 
-(defun hl-block-mode-enable ()
+(defun hl-block--mode-enable ()
   "Turn on `hl-block-mode' for the current buffer."
   (hl-block--time-buffer-local-enable)
 
@@ -390,14 +390,14 @@ Argument BLOCK-LIST represents start-end ranges of braces."
           (when (eq ?\( (char-syntax ch))
             (push ch hl-block-bracket)))))))
 
-(defun hl-block-mode-disable ()
+(defun hl-block--mode-disable ()
   "Turn off `hl-block-mode' for the current buffer."
   (hl-block--overlay-clear)
   (kill-local-variable 'hl-block--overlay)
   (kill-local-variable 'hl-block-bracket)
   (hl-block--time-buffer-local-disable))
 
-(defun hl-block-mode-turn-on ()
+(defun hl-block--mode-turn-on ()
   "Enable command `hl-block-mode'."
   (when (and (not (minibufferp)) (not (bound-and-true-p hl-block-mode)))
     (hl-block-mode 1)))
@@ -413,17 +413,15 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
   (cond
     (hl-block-mode
-      (jit-lock-unregister 'hl-block-mode-enable)
-      (hl-block-mode-enable))
+      (hl-block--mode-enable))
     (t
-      (jit-lock-unregister 'hl-block-mode-enable)
-      (hl-block-mode-disable))))
+      (hl-block--mode-disable))))
 
 ;;;###autoload
 (define-globalized-minor-mode
   global-hl-block-mode
 
-  hl-block-mode hl-block-mode-turn-on)
+  hl-block-mode hl-block--mode-turn-on)
 
 (provide 'hl-block-mode)
 ;; Local Variables:
