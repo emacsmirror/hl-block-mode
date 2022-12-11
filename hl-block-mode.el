@@ -28,13 +28,17 @@
 ;; ---------------------------------------------------------------------------
 ;; Custom Variables
 
-(defgroup hl-block nil "Highlight nested blocks or brackets." :group 'convenience)
+(defgroup hl-block nil
+  "Highlight nested blocks or brackets."
+  :group 'convenience)
 
 (defcustom hl-block-bracket "{"
   "Characters to use as a starting bracket (set to nil to use all brackets)."
   :type '(or null string))
 
-(defcustom hl-block-delay 0.2 "Idle time to wait before highlighting (in seconds)." :type 'float)
+(defcustom hl-block-delay 0.2
+  "Idle time to wait before highlighting (in seconds)."
+  :type 'float)
 
 (defcustom hl-block-multi-line nil
   "Skip highlighting nested blocks on the same line.
@@ -49,8 +53,7 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 (defcustom hl-block-style 'color-tint
   "Only highlight a single level."
   :type
-  '
-  (choice
+  '(choice
     (symbol :tag "Tint the background at each level `hl-block-color-tint'." color-tint)
     (symbol :tag "Highlight surrounding brackets using `hl-block-bracket-face'." bracket)))
 
@@ -64,7 +67,9 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
   "Face used when `hl-block-style' is set to `bracket'."
   :type 'face)
 
-(defcustom hl-block-mode-lighter "" "Lighter for option `hl-block-mode'." :type 'string)
+(defcustom hl-block-mode-lighter ""
+  "Lighter for option `hl-block-mode'."
+  :type 'string)
 
 
 ;; ---------------------------------------------------------------------------
@@ -78,29 +83,32 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 (defun hl-block--syntax-prev-bracket (pt)
   "A version of `syntax-ppss' to match curly braces.
 PT is typically the `(point)'."
-  (let ((beg (ignore-errors (elt (syntax-ppss pt) 1))))
+  (let ((beg
+         (ignore-errors
+           (elt (syntax-ppss pt) 1))))
     (when beg
       (cond
-        ((memq (char-after beg) hl-block-bracket)
-          beg)
-        (t
-          (hl-block--syntax-prev-bracket (1- beg)))))))
+       ((memq (char-after beg) hl-block-bracket)
+        beg)
+       (t
+        (hl-block--syntax-prev-bracket (1- beg)))))))
 
 
 (defun hl-block--find-range (pt)
   "Return range around PT or nil."
-  (let
-    (
-      (beg
-        (cond
+  (let ((beg
+         (cond
           (hl-block-bracket
-            (hl-block--syntax-prev-bracket pt))
+           (hl-block--syntax-prev-bracket pt))
           (t
-            (ignore-errors (elt (syntax-ppss pt) 1))))))
+           (ignore-errors
+             (elt (syntax-ppss pt) 1))))))
     (when beg
       ;; Note that `end' may be nil for un-matched brackets.
       ;; The caller must handle this case.
-      (let ((end (ignore-errors (scan-sexps beg 1))))
+      (let ((end
+             (ignore-errors
+               (scan-sexps beg 1))))
         (cons beg end)))))
 
 
@@ -123,16 +131,18 @@ PT is typically the `(point)'."
   "Move point to the first multi-line block.
 
 The point will only ever be moved backward."
-  (let
-    (
-      (line-min (line-beginning-position))
-      (line-max (line-end-position))
-      (beg (point))
-      (end (point)))
+  (let ((line-min (line-beginning-position))
+        (line-max (line-end-position))
+        (beg (point))
+        (end (point)))
     (while (and beg (>= beg line-min) end (<= end line-max))
-      (setq beg (ignore-errors (elt (syntax-ppss beg) 1)))
+      (setq beg
+            (ignore-errors
+              (elt (syntax-ppss beg) 1)))
       (when beg
-        (setq end (ignore-errors (scan-sexps beg 1)))))))
+        (setq end
+              (ignore-errors
+                (scan-sexps beg 1)))))))
 
 
 ;; ---------------------------------------------------------------------------
@@ -147,17 +157,17 @@ Inverse of `color-values'."
 (defun hl-block--color-tint-add (a b tint)
   "Tint color lighter from A to B by TINT amount."
   (vector
-    (+ (aref a 0) (* tint (aref b 0)))
-    (+ (aref a 1) (* tint (aref b 1)))
-    (+ (aref a 2) (* tint (aref b 2)))))
+   (+ (aref a 0) (* tint (aref b 0)))
+   (+ (aref a 1) (* tint (aref b 1)))
+   (+ (aref a 2) (* tint (aref b 2)))))
 
 
 (defun hl-block--color-tint-sub (a b tint)
   "Tint colors darker from A to B by TINT amount."
   (vector
-    (- (aref a 0) (* tint (aref b 0)))
-    (- (aref a 1) (* tint (aref b 1)))
-    (- (aref a 2) (* tint (aref b 2)))))
+   (- (aref a 0) (* tint (aref b 0)))
+   (- (aref a 1) (* tint (aref b 1)))
+   (- (aref a 2) (* tint (aref b 2)))))
 
 
 (defun hl-block--overlay-create-color-tint (block-list end-fallback)
@@ -165,15 +175,13 @@ Inverse of `color-values'."
 Argument BLOCK-LIST represents start-end ranges of braces.
 Argument END-FALLBACK is the point used when no matching end bracket is found,
 typically `(point)'."
-  (let*
-    (
-      (block-list-len (length block-list))
-      (bg-color (apply #'vector (color-values (face-attribute 'default :background))))
-      (bg-color-tint (apply #'vector (color-values hl-block-color-tint)))
-      ;; Check dark background is light/dark.
-      (do-highlight (> 98304 (+ (aref bg-color 0) (aref bg-color 1) (aref bg-color 2))))
-      ;; Iterator.
-      (i 0))
+  (let* ((block-list-len (length block-list))
+         (bg-color (apply #'vector (color-values (face-attribute 'default :background))))
+         (bg-color-tint (apply #'vector (color-values hl-block-color-tint)))
+         ;; Check dark background is light/dark.
+         (do-highlight (> 98304 (+ (aref bg-color 0) (aref bg-color 1) (aref bg-color 2))))
+         ;; Iterator.
+         (i 0))
     (pcase-let ((`(,beg-prev . ,end-prev) (pop block-list)))
       (unless end-prev ;; May be `nil' for un-matched brackets.
         (setq end-prev end-fallback))
@@ -181,24 +189,22 @@ typically `(point)'."
         (pcase-let ((`(,beg . ,end) (pop block-list)))
           (unless end ;; May be `nil' for un-matched brackets.
             (setq end end-fallback))
-          (let
-            (
-              (elem-overlay-beg (make-overlay beg beg-prev))
-              (elem-overlay-end (make-overlay end-prev end)))
+          (let ((elem-overlay-beg (make-overlay beg beg-prev))
+                (elem-overlay-end (make-overlay end-prev end)))
 
             (let
-              ( ;; Calculate the face with the tint color at this highlight level.
-                (hl-face
+                ( ;; Calculate the face with the tint color at this highlight level.
+                 (hl-face
                   (list
-                    :background
-                    (hl-block--color-values-as-string
-                      (let ((i-tint (- block-list-len i)))
-                        (cond
-                          (do-highlight
-                            (hl-block--color-tint-add bg-color bg-color-tint i-tint))
-                          (t
-                            (hl-block--color-tint-sub bg-color bg-color-tint i-tint)))))
-                    :extend t)))
+                   :background
+                   (hl-block--color-values-as-string
+                    (let ((i-tint (- block-list-len i)))
+                      (cond
+                       (do-highlight
+                        (hl-block--color-tint-add bg-color bg-color-tint i-tint))
+                       (t
+                        (hl-block--color-tint-sub bg-color bg-color-tint i-tint)))))
+                   :extend t)))
 
               (overlay-put elem-overlay-beg 'face hl-face)
               (overlay-put elem-overlay-end 'face hl-face))
@@ -239,33 +245,31 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 (defun hl-block--overlay-refresh ()
   "Update the overlays based on the cursor location."
   (hl-block--overlay-clear)
-  (let
-    (
-      (block-list
-        (save-excursion
-          (when hl-block-multi-line
-            (hl-block--syntax-skip-to-multi-line))
-          (cond
+  (let ((block-list
+         (save-excursion
+           (when hl-block-multi-line
+             (hl-block--syntax-skip-to-multi-line))
+           (cond
             (hl-block-single-level
-              (hl-block--find-single-range (point)))
+             (hl-block--find-single-range (point)))
             (t
-              (hl-block--find-all-ranges (point)))))))
+             (hl-block--find-all-ranges (point)))))))
 
     (when block-list
       (cond
-        ((eq hl-block-style 'color-tint)
-          ;; Ensure outer bounds (when only one pair exists).
-          (setq block-list
-            (cond
-              ((cdr block-list)
+       ((eq hl-block-style 'color-tint)
+        ;; Ensure outer bounds (when only one pair exists).
+        (setq block-list
+              (cond
+               ((cdr block-list)
                 (reverse block-list))
-              (t
+               (t
                 (cons (cons (point-min) (point-max)) block-list))))
-          (hl-block--overlay-create-color-tint block-list (point)))
-        ((eq hl-block-style 'bracket)
-          (hl-block--overlay-create-bracket block-list))
-        (t
-          (error "Unknown style %S" hl-block-style))))))
+        (hl-block--overlay-create-color-tint block-list (point)))
+       ((eq hl-block-style 'bracket)
+        (hl-block--overlay-create-bracket block-list))
+       (t
+        (error "Unknown style %S" hl-block-style))))))
 
 
 ;; ---------------------------------------------------------------------------
@@ -299,24 +303,22 @@ Argument BLOCK-LIST represents start-end ranges of braces."
   (let ((is-mode-active (bound-and-true-p hl-block-mode)))
     ;; When this buffer is not in the mode, flush all other buffers.
     (cond
-      (is-mode-active
-        ;; Don't update in the window loop to ensure we always
-        ;; update the current buffer in the current context.
-        (setq hl-block--dirty nil))
-      (t
-        ;; If the timer ran when in another buffer,
-        ;; a previous buffer may need a final refresh, ensure this happens.
-        (setq hl-block--dirty-flush-all t)))
+     (is-mode-active
+      ;; Don't update in the window loop to ensure we always
+      ;; update the current buffer in the current context.
+      (setq hl-block--dirty nil))
+     (t
+      ;; If the timer ran when in another buffer,
+      ;; a previous buffer may need a final refresh, ensure this happens.
+      (setq hl-block--dirty-flush-all t)))
 
     (when hl-block--dirty-flush-all
       ;; Run the mode callback for all other buffers in the queue.
       (dolist (frame (frame-list))
         (dolist (win (window-list frame -1))
           (let ((buf (window-buffer win)))
-            (when
-              (and
-                (buffer-local-value 'hl-block-mode buf)
-                (buffer-local-value 'hl-block--dirty buf))
+            (when (and (buffer-local-value 'hl-block-mode buf)
+                       (buffer-local-value 'hl-block--dirty buf))
               (with-selected-frame frame
                 (with-selected-window win
                   (with-current-buffer buf
@@ -328,33 +330,33 @@ Argument BLOCK-LIST represents start-end ranges of braces."
       (setq hl-block--dirty t))
 
     (cond
-      (is-mode-active
-        (hl-block--overlay-refresh))
-      (t ;; Cancel the timer until the current buffer uses this mode again.
-        (hl-block--time-ensure nil)))))
+     (is-mode-active
+      (hl-block--overlay-refresh))
+     (t ;; Cancel the timer until the current buffer uses this mode again.
+      (hl-block--time-ensure nil)))))
 
 (defun hl-block--time-ensure (state)
   "Ensure the timer is enabled when STATE is non-nil, otherwise disable."
   (cond
-    (state
-      (unless hl-block--global-timer
-        (setq hl-block--global-timer
-          (run-with-idle-timer hl-block-delay :repeat 'hl-block--time-callback-or-disable))))
-    (t
-      (when hl-block--global-timer
-        (cancel-timer hl-block--global-timer)
-        (setq hl-block--global-timer nil)))))
+   (state
+    (unless hl-block--global-timer
+      (setq hl-block--global-timer
+            (run-with-idle-timer hl-block-delay :repeat 'hl-block--time-callback-or-disable))))
+   (t
+    (when hl-block--global-timer
+      (cancel-timer hl-block--global-timer)
+      (setq hl-block--global-timer nil)))))
 
 (defun hl-block--time-reset ()
   "Run this when the buffer was changed."
   ;; Ensure changing windows doesn't leave other buffers with stale highlight.
   (cond
-    ((bound-and-true-p hl-block-mode)
-      (setq hl-block--dirty-flush-all t)
-      (setq hl-block--dirty t)
-      (hl-block--time-ensure t))
-    (t
-      (hl-block--time-ensure nil))))
+   ((bound-and-true-p hl-block-mode)
+    (setq hl-block--dirty-flush-all t)
+    (setq hl-block--dirty t)
+    (hl-block--time-ensure t))
+   (t
+    (hl-block--time-ensure nil))))
 
 (defun hl-block--time-buffer-local-enable ()
   "Ensure buffer local state is enabled."
@@ -412,16 +414,15 @@ Argument BLOCK-LIST represents start-end ranges of braces."
   :lighter hl-block-mode-lighter
 
   (cond
-    (hl-block-mode
-      (hl-block--mode-enable))
-    (t
-      (hl-block--mode-disable))))
+   (hl-block-mode
+    (hl-block--mode-enable))
+   (t
+    (hl-block--mode-disable))))
 
 ;;;###autoload
-(define-globalized-minor-mode
-  global-hl-block-mode
-
-  hl-block-mode hl-block--mode-turn-on)
+(define-globalized-minor-mode global-hl-block-mode
+  hl-block-mode
+  hl-block--mode-turn-on)
 
 (provide 'hl-block-mode)
 ;; Local Variables:
