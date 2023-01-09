@@ -183,28 +183,27 @@ typically `(point)'."
          ;; Iterator.
          (i 0))
     (pcase-let ((`(,beg-prev . ,end-prev) (pop block-list)))
-      (unless end-prev ;; May be `nil' for un-matched brackets.
+      (unless end-prev ; May be `nil' for un-matched brackets.
         (setq end-prev end-fallback))
       (while block-list
         (pcase-let ((`(,beg . ,end) (pop block-list)))
-          (unless end ;; May be `nil' for un-matched brackets.
+          (unless end ; May be `nil' for un-matched brackets.
             (setq end end-fallback))
           (let ((elem-overlay-beg (make-overlay beg beg-prev))
                 (elem-overlay-end (make-overlay end-prev end)))
 
-            (let
-                ( ;; Calculate the face with the tint color at this highlight level.
-                 (hl-face
-                  (list
-                   :background
-                   (hl-block--color-values-as-string
-                    (let ((i-tint (- block-list-len i)))
-                      (cond
-                       (do-highlight
-                        (hl-block--color-tint-add bg-color bg-color-tint i-tint))
-                       (t
-                        (hl-block--color-tint-sub bg-color bg-color-tint i-tint)))))
-                   :extend t)))
+            ;; Calculate the face with the tint color at this highlight level.
+            (let ((hl-face
+                   (list
+                    :background
+                    (hl-block--color-values-as-string
+                     (let ((i-tint (- block-list-len i)))
+                       (cond
+                        (do-highlight
+                         (hl-block--color-tint-add bg-color bg-color-tint i-tint))
+                        (t
+                         (hl-block--color-tint-sub bg-color bg-color-tint i-tint)))))
+                    :extend t)))
 
               (overlay-put elem-overlay-beg 'face hl-face)
               (overlay-put elem-overlay-end 'face hl-face))
@@ -227,7 +226,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
     (let ((elem-overlay-beg (make-overlay beg (1+ beg))))
       (overlay-put elem-overlay-beg 'face hl-block-bracket-face)
       (push elem-overlay-beg hl-block--overlay)
-      (when end ;; May be `nil' for un-matched brackets.
+      (when end ; May be `nil' for un-matched brackets.
         (let ((elem-overlay-end (make-overlay (1- end) end)))
           (overlay-put elem-overlay-end 'face hl-block-bracket-face)
           (push elem-overlay-end hl-block--overlay))))))
@@ -332,7 +331,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
     (cond
      (is-mode-active
       (hl-block--overlay-refresh))
-     (t ;; Cancel the timer until the current buffer uses this mode again.
+     (t ; Cancel the timer until the current buffer uses this mode again.
       (hl-block--time-ensure nil)))))
 
 (defun hl-block--time-ensure (state)
