@@ -425,6 +425,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (provide 'hl-block-mode)
 ;; Local Variables:
+;; fill-column: 99
 ;; indent-tabs-mode: nil
 ;; End:
 ;;; hl-block-mode.el ends here
