@@ -131,8 +131,8 @@ PT is typically the `(point)'."
   "Move point to the first multi-line block.
 
 The point will only ever be moved backward."
-  (let ((line-min (line-beginning-position))
-        (line-max (line-end-position))
+  (let ((line-min (pos-bol))
+        (line-max (pos-eol))
         (beg (point))
         (end (point)))
     (while (and beg (>= beg line-min) end (<= end line-max))
