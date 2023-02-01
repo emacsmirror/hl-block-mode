@@ -69,9 +69,8 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 (defcustom hl-block-style 'color-tint
   "Only highlight a single level."
   :type
-  '(choice
-    (symbol :tag "Tint the background at each level `hl-block-color-tint'." color-tint)
-    (symbol :tag "Highlight surrounding brackets using `hl-block-bracket-face'." bracket)))
+  '(choice (symbol :tag "Tint the background at each level `hl-block-color-tint'." color-tint)
+           (symbol :tag "Highlight surrounding brackets using `hl-block-bracket-face'." bracket)))
 
 ;; For `color-tint' draw style.
 (defcustom hl-block-color-tint "#040404"
@@ -445,5 +444,6 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 ;; Local Variables:
 ;; fill-column: 99
 ;; indent-tabs-mode: nil
+;; elisp-autofmt-format-quoted: nil
 ;; End:
 ;;; hl-block-mode.el ends here
