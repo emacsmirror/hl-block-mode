@@ -100,7 +100,7 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 PT is typically the `(point)'."
   (let ((beg
          (ignore-errors
-           (elt (syntax-ppss pt) 1))))
+           (nth 1 (syntax-ppss pt)))))
     (when beg
       (cond
        ((memq (char-after beg) hl-block-bracket)
@@ -117,7 +117,7 @@ PT is typically the `(point)'."
            (hl-block--syntax-prev-bracket pt))
           (t
            (ignore-errors
-             (elt (syntax-ppss pt) 1))))))
+             (nth 1 (syntax-ppss pt)))))))
     (when beg
       ;; Note that `end' may be nil for un-matched brackets.
       ;; The caller must handle this case.
@@ -153,7 +153,7 @@ The point will only ever be moved backward."
     (while (and beg (>= beg line-min) end (<= end line-max))
       (setq beg
             (ignore-errors
-              (elt (syntax-ppss beg) 1)))
+              (nth 1 (syntax-ppss beg))))
       (when beg
         (setq end
               (ignore-errors
