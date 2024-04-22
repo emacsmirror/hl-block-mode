@@ -82,6 +82,7 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 (defun hl-block--syntax-prev-bracket (pt)
   "A version of `syntax-ppss' to match curly braces.
 PT is typically the `(point)'."
+  (declare (important-return-value t))
   (let ((beg
          (ignore-errors
            (nth 1 (syntax-ppss pt)))))
@@ -95,6 +96,7 @@ PT is typically the `(point)'."
 
 (defun hl-block--find-range (pt)
   "Return range around PT or nil."
+  (declare (important-return-value t))
   (let ((beg
          (cond
           (hl-block-bracket
@@ -113,6 +115,7 @@ PT is typically the `(point)'."
 
 (defun hl-block--find-all-ranges (pt)
   "Return ranges starting from PT, outer-most to inner-most."
+  (declare (important-return-value t))
   (let ((range (hl-block--find-range pt)))
     (when range
       ;; When the previous range is nil, this simply terminates the list.
@@ -121,6 +124,7 @@ PT is typically the `(point)'."
 
 (defun hl-block--find-single-range (pt)
   "Return ranges starting from PT, only a single level."
+  (declare (important-return-value t))
   (let ((range (hl-block--find-range pt)))
     (when range
       (list range))))
@@ -130,6 +134,7 @@ PT is typically the `(point)'."
   "Move point to the first multi-line block.
 
 The point will only ever be moved backward."
+  (declare (important-return-value nil))
   (let ((line-min (pos-bol))
         (line-max (pos-eol))
         (beg (point))
@@ -150,11 +155,13 @@ The point will only ever be moved backward."
 (defun hl-block--color-values-as-string (color)
   "Build a color from COLOR.
 Inverse of `color-values'."
+  (declare (important-return-value t))
   (format "#%02x%02x%02x" (ash (aref color 0) -8) (ash (aref color 1) -8) (ash (aref color 2) -8)))
 
 
 (defun hl-block--color-tint-add (a b tint)
   "Tint color lighter from A to B by TINT amount."
+  (declare (important-return-value t))
   (vector
    (+ (aref a 0) (* tint (aref b 0)))
    (+ (aref a 1) (* tint (aref b 1)))
@@ -163,6 +170,7 @@ Inverse of `color-values'."
 
 (defun hl-block--color-tint-sub (a b tint)
   "Tint colors darker from A to B by TINT amount."
+  (declare (important-return-value t))
   (vector
    (- (aref a 0) (* tint (aref b 0)))
    (- (aref a 1) (* tint (aref b 1)))
@@ -174,6 +182,7 @@ Inverse of `color-values'."
 Argument BLOCK-LIST represents start-end ranges of braces.
 Argument END-FALLBACK is the point used when no matching end bracket is found,
 typically `(point)'."
+  (declare (important-return-value nil))
   (let* ((block-list-len (length block-list))
          (bg-color (apply #'vector (color-values (face-attribute 'default :background))))
          (bg-color-tint (apply #'vector (color-values hl-block-color-tint)))
@@ -220,6 +229,7 @@ typically `(point)'."
 (defun hl-block--overlay-create-bracket (block-list)
   "Update the overlays based on the cursor location.
 Argument BLOCK-LIST represents start-end ranges of braces."
+  (declare (important-return-value nil))
   ;; hl-block-bracket-face
   (pcase-dolist (`(,beg . ,end) block-list)
     (let ((elem-overlay-beg (make-overlay beg (1+ beg))))
@@ -236,12 +246,14 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--overlay-clear ()
   "Clear all overlays."
+  (declare (important-return-value nil))
   (mapc 'delete-overlay hl-block--overlay)
   (setq hl-block--overlay nil))
 
 
 (defun hl-block--overlay-refresh ()
   "Update the overlays based on the cursor location."
+  (declare (important-return-value nil))
   (hl-block--overlay-clear)
   (let ((block-list
          (save-excursion
@@ -296,6 +308,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--time-callback-or-disable ()
   "Callback that run the repeat timer."
+  (declare (important-return-value nil))
 
   ;; Ensure all other buffers are highlighted on request.
   (let ((is-mode-active (bound-and-true-p hl-block-mode)))
@@ -335,6 +348,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--time-ensure (state)
   "Ensure the timer is enabled when STATE is non-nil, otherwise disable."
+  (declare (important-return-value nil))
   (cond
    (state
     (unless hl-block--global-timer
@@ -347,6 +361,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--time-reset ()
   "Run this when the buffer was changed."
+  (declare (important-return-value nil))
   ;; Ensure changing windows doesn't leave other buffers with stale highlight.
   (cond
    ((bound-and-true-p hl-block-mode)
@@ -358,6 +373,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--time-buffer-local-enable ()
   "Ensure buffer local state is enabled."
+  (declare (important-return-value nil))
   ;; Needed in case focus changes before the idle timer runs.
   (setq hl-block--dirty-flush-all t)
   (setq hl-block--dirty t)
@@ -366,6 +382,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--time-buffer-local-disable ()
   "Ensure buffer local state is disabled."
+  (declare (important-return-value nil))
   (kill-local-variable 'hl-block--dirty)
   (hl-block--time-ensure nil)
   (remove-hook 'window-state-change-hook #'hl-block--time-reset t))
@@ -375,6 +392,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--mode-enable ()
   "Turn on `hl-block-mode' for the current buffer."
+  (declare (important-return-value nil))
   (hl-block--time-buffer-local-enable)
 
   ;; Setup brackets:
@@ -392,6 +410,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--mode-disable ()
   "Turn off `hl-block-mode' for the current buffer."
+  (declare (important-return-value nil))
   (hl-block--overlay-clear)
   (kill-local-variable 'hl-block--overlay)
   (kill-local-variable 'hl-block-bracket)
@@ -399,6 +418,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 (defun hl-block--mode-turn-on ()
   "Enable command `hl-block-mode'."
+  (declare (important-return-value nil))
   (when (and (not (minibufferp)) (not (bound-and-true-p hl-block-mode)))
     (hl-block-mode 1)))
 
