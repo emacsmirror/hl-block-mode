@@ -272,7 +272,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
         (setq block-list
               (cond
                ((cdr block-list)
-                (reverse block-list))
+                (nreverse block-list))
                (t
                 (cons (cons (point-min) (point-max)) block-list))))
         (hl-block--overlay-create-color-tint block-list (point)))
