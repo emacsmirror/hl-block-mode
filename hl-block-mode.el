@@ -34,7 +34,7 @@
 
 (defcustom hl-block-bracket "{"
   "Characters to use as a starting bracket (set to nil to use all brackets)."
-  :type '(or null string))
+  :type '(choice (const nil) string))
 
 (defcustom hl-block-delay 0.2
   "Idle time to wait before highlighting (in seconds)."
