@@ -220,7 +220,7 @@ typically `(point)'."
             (push elem-overlay-end hl-block--overlay)
             (setq beg-prev beg)
             (setq end-prev end))
-          (setq i (1+ i)))))))
+          (incf i))))))
 
 
 ;; ---------------------------------------------------------------------------
