@@ -437,7 +437,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 (defun hl-block--mode-turn-on ()
   "Enable command `hl-block-mode'."
   (declare (important-return-value nil))
-  (when (and (not (minibufferp)) (not (bound-and-true-p hl-block-mode)))
+  (when (and (null (minibufferp)) (not (bound-and-true-p hl-block-mode)))
     (hl-block-mode 1)))
 
 ;; ---------------------------------------------------------------------------
