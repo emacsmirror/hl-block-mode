@@ -265,7 +265,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 (defun hl-block--overlay-clear ()
   "Clear all overlays."
   (declare (important-return-value nil))
-  (mapc 'delete-overlay hl-block--overlay)
+  (mapc #'delete-overlay hl-block--overlay)
   (setq hl-block--overlay nil))
 
 
@@ -371,7 +371,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
    (state
     (unless hl-block--global-timer
       (setq hl-block--global-timer
-            (run-with-idle-timer hl-block-delay :repeat 'hl-block--time-callback-or-disable))))
+            (run-with-idle-timer hl-block-delay :repeat #'hl-block--time-callback-or-disable))))
    (t
     (when hl-block--global-timer
       (cancel-timer hl-block--global-timer)
