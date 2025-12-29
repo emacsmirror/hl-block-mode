@@ -70,8 +70,8 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 (defcustom hl-block-style 'color-tint
   "Only highlight a single level."
   :type
-  '(choice (symbol :tag "Tint the background at each level `hl-block-color-tint'." color-tint)
-           (symbol :tag "Highlight surrounding brackets using `hl-block-bracket-face'." bracket)))
+  '(choice (const :tag "Tint the background at each level." color-tint)
+           (const :tag "Highlight surrounding brackets." bracket)))
 
 ;; For `color-tint' draw style.
 (defcustom hl-block-color-tint "#040404"
@@ -81,7 +81,7 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 ;; For `bracket' draw style.
 (defcustom hl-block-bracket-face '(:inverse-video t)
   "Face used when `hl-block-style' is set to `bracket'."
-  :type 'face)
+  :type '(choice face plist))
 
 (defcustom hl-block-mode-lighter ""
   "Lighter for option `hl-block-mode'."
