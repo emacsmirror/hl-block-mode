@@ -55,7 +55,7 @@
 
 (defcustom hl-block-delay 0.2
   "Idle time to wait before highlighting (in seconds)."
-  :type 'float)
+  :type 'number)
 
 (defcustom hl-block-multi-line nil
   "Skip highlighting nested blocks on the same line.
