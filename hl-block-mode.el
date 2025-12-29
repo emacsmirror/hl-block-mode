@@ -101,15 +101,14 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
   "A version of `syntax-ppss' to match curly braces.
 PT is typically the `(point)'."
   (declare (important-return-value t))
-  (let ((beg
-         (ignore-errors
-           (nth 1 (syntax-ppss pt)))))
-    (when beg
-      (cond
-       ((memq (char-after beg) hl-block-bracket)
-        beg)
-       (t
-        (hl-block--syntax-prev-bracket (1- beg)))))))
+  (when-let* ((beg
+               (ignore-errors
+                 (nth 1 (syntax-ppss pt)))))
+    (cond
+     ((memq (char-after beg) hl-block-bracket)
+      beg)
+     (t
+      (hl-block--syntax-prev-bracket (1- beg))))))
 
 
 (defun hl-block--find-range (pt)
@@ -134,18 +133,16 @@ PT is typically the `(point)'."
 (defun hl-block--find-all-ranges (pt)
   "Return ranges starting from PT, outer-most to inner-most."
   (declare (important-return-value t))
-  (let ((range (hl-block--find-range pt)))
-    (when range
-      ;; When the previous range is nil, this simply terminates the list.
-      (cons range (hl-block--find-all-ranges (car range))))))
+  (when-let* ((range (hl-block--find-range pt)))
+    ;; When the previous range is nil, this simply terminates the list.
+    (cons range (hl-block--find-all-ranges (car range)))))
 
 
 (defun hl-block--find-single-range (pt)
   "Return ranges starting from PT, only a single level."
   (declare (important-return-value t))
-  (let ((range (hl-block--find-range pt)))
-    (when range
-      (list range))))
+  (when-let* ((range (hl-block--find-range pt)))
+    (list range)))
 
 
 (defun hl-block--syntax-skip-to-multi-line ()
