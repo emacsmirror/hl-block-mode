@@ -91,7 +91,7 @@ Useful for languages that use S-expressions to avoid overly nested highlighting.
 ;; ---------------------------------------------------------------------------
 ;; Internal Variables
 
-(defvar-local hl-block--overlay nil)
+(defvar-local hl-block--overlays nil)
 
 
 ;; ---------------------------------------------------------------------------
@@ -231,8 +231,8 @@ typically `(point)'."
               (overlay-put elem-overlay-beg 'face hl-face)
               (overlay-put elem-overlay-end 'face hl-face))
 
-            (push elem-overlay-beg hl-block--overlay)
-            (push elem-overlay-end hl-block--overlay)
+            (push elem-overlay-beg hl-block--overlays)
+            (push elem-overlay-end hl-block--overlays)
             (setq beg-prev beg)
             (setq end-prev end))
           (incf i))))))
@@ -249,11 +249,11 @@ Argument BLOCK-LIST represents start-end ranges of braces."
   (pcase-dolist (`(,beg . ,end) block-list)
     (let ((elem-overlay-beg (make-overlay beg (1+ beg))))
       (overlay-put elem-overlay-beg 'face hl-block-bracket-face)
-      (push elem-overlay-beg hl-block--overlay)
+      (push elem-overlay-beg hl-block--overlays)
       (when end ; May be `nil' for un-matched brackets.
         (let ((elem-overlay-end (make-overlay (1- end) end)))
           (overlay-put elem-overlay-end 'face hl-block-bracket-face)
-          (push elem-overlay-end hl-block--overlay))))))
+          (push elem-overlay-end hl-block--overlays))))))
 
 
 ;; ---------------------------------------------------------------------------
@@ -262,8 +262,8 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 (defun hl-block--overlay-clear ()
   "Clear all overlays."
   (declare (important-return-value nil))
-  (mapc #'delete-overlay hl-block--overlay)
-  (setq hl-block--overlay nil))
+  (mapc #'delete-overlay hl-block--overlays)
+  (setq hl-block--overlays nil))
 
 
 (defun hl-block--overlay-refresh ()
@@ -428,7 +428,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
   "Turn off `hl-block-mode' for the current buffer."
   (declare (important-return-value nil))
   (hl-block--overlay-clear)
-  (kill-local-variable 'hl-block--overlay)
+  (kill-local-variable 'hl-block--overlays)
   (kill-local-variable 'hl-block-bracket)
   (hl-block--time-buffer-local-disable))
 
