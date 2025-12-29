@@ -341,15 +341,16 @@ Argument BLOCK-LIST represents start-end ranges of braces."
     (when hl-block--dirty-flush-all
       ;; Run the mode callback for all other buffers in the queue.
       (dolist (frame (frame-list))
-        (dolist (win (window-list frame -1))
-          (let ((buf (window-buffer win)))
-            (when (and (buffer-local-value 'hl-block-mode buf)
-                       (buffer-local-value 'hl-block--dirty buf))
-              (with-selected-frame frame
-                (with-selected-window win
-                  (with-current-buffer buf
-                    (setq hl-block--dirty nil)
-                    (hl-block--overlay-refresh)))))))))
+        (when (frame-live-p frame)
+          (dolist (win (window-list frame -1))
+            (let ((buf (window-buffer win)))
+              (when (and (buffer-local-value 'hl-block-mode buf)
+                         (buffer-local-value 'hl-block--dirty buf))
+                (with-selected-frame frame
+                  (with-selected-window win
+                    (with-current-buffer buf
+                      (setq hl-block--dirty nil)
+                      (hl-block--overlay-refresh))))))))))
     ;; Always keep the current buffer dirty
     ;; so navigating away from this buffer will refresh it.
     (when is-mode-active
