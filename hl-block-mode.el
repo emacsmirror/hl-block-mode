@@ -4,8 +4,8 @@
 ;; Copyright (C) 2019-2021  Campbell Barton
 
 ;; Author: Campbell Barton <ideasman42@gmail.com>
-
 ;; URL: https://codeberg.org/ideasman42/emacs-hl-block-mode
+;; Keywords: convenience, faces
 ;; Version: 0.2
 ;; Package-Requires: ((emacs "29.1"))
 
@@ -13,7 +13,7 @@
 
 ;; Highlight blocks surrounding the cursor.
 
-;;; Usage
+;;; Usage:
 
 ;; (hl-block-mode)        ; Activate in the current buffer.
 ;; (hl-block-global-mode) ; Activate globally for all buffers.
@@ -21,7 +21,7 @@
 ;;; Code:
 
 (eval-when-compile
-  ;; For `pcase-dolist'.
+  ;; For pcase macros.
   (require 'pcase))
 
 
@@ -50,7 +50,7 @@
   :group 'convenience)
 
 (defcustom hl-block-bracket "{"
-  "Characters to use as a starting bracket (set to nil to use all brackets)."
+  "Characters to use as starting brackets (set to nil to use all brackets)."
   :type '(choice (const nil) string))
 
 (defcustom hl-block-delay 0.2
@@ -58,48 +58,49 @@
   :type 'number)
 
 (defcustom hl-block-multi-line nil
-  "Skip highlighting nested blocks on the same line.
+  "When non-nil, skip highlighting nested blocks on the same line.
 
 Useful for languages that use S-expressions to avoid overly nested highlighting."
   :type 'boolean)
 
 (defcustom hl-block-single-level nil
-  "Only highlight a single level, otherwise highlight all levels."
+  "When non-nil, highlight only a single level instead of all levels."
   :type 'boolean)
 
 (defcustom hl-block-style 'color-tint
-  "Only highlight a single level."
+  "Style used for highlighting blocks."
   :type
   '(choice (const :tag "Tint the background at each level." color-tint)
            (const :tag "Highlight surrounding brackets." bracket)))
 
-;; For `color-tint' draw style.
+;; Used with the `color-tint' draw style.
 (defcustom hl-block-color-tint "#040404"
   "Color to add/subtract from the background each scope step."
   :type 'color)
 
-;; For `bracket' draw style.
+;; Used with the `bracket' draw style.
 (defcustom hl-block-bracket-face '(:inverse-video t)
   "Face used when `hl-block-style' is set to `bracket'."
   :type '(choice face plist))
 
 (defcustom hl-block-mode-lighter ""
-  "Lighter for option `hl-block-mode'."
+  "Lighter for `hl-block-mode'."
   :type 'string)
 
 
 ;; ---------------------------------------------------------------------------
 ;; Internal Variables
 
-(defvar-local hl-block--overlays nil)
+(defvar-local hl-block--overlays nil
+  "List of overlays used for highlighting.")
 
 
 ;; ---------------------------------------------------------------------------
 ;; Internal Bracket Functions
 
 (defun hl-block--syntax-prev-bracket (pt)
-  "A version of `syntax-ppss' to match curly braces.
-PT is typically the `(point)'."
+  "Find the previous bracket position matching `hl-block-bracket'.
+PT is typically the result of calling `point'."
   (declare (important-return-value t))
   (when-let* ((beg
                (ignore-errors
@@ -122,7 +123,7 @@ PT is typically the `(point)'."
            (ignore-errors
              (nth 1 (syntax-ppss pt)))))))
     (when beg
-      ;; Note that `end' may be nil for un-matched brackets.
+      ;; Note that `end' may be nil for unmatched brackets.
       ;; The caller must handle this case.
       (let ((end
              (ignore-errors
@@ -131,15 +132,15 @@ PT is typically the `(point)'."
 
 
 (defun hl-block--find-all-ranges (pt)
-  "Return ranges starting from PT, outer-most to inner-most."
+  "Return ranges starting from PT, innermost to outermost."
   (declare (important-return-value t))
   (when-let* ((range (hl-block--find-range pt)))
-    ;; When the previous range is nil, this simply terminates the list.
+    ;; When no further range is found, recursion terminates.
     (cons range (hl-block--find-all-ranges (car range)))))
 
 
 (defun hl-block--find-single-range (pt)
-  "Return ranges starting from PT, only a single level."
+  "Return a list with the innermost range around PT."
   (declare (important-return-value t))
   (when-let* ((range (hl-block--find-range pt)))
     (list range)))
@@ -168,14 +169,14 @@ The point will only ever be moved backward."
 ;; Internal Color Tint (Draw Style)
 
 (defun hl-block--color-values-as-string (color)
-  "Build a color from COLOR.
-Inverse of `color-values'."
+  "Convert COLOR vector to a hex color string.
+COLOR is a 3-element vector of RGB values."
   (declare (important-return-value t))
   (format "#%02x%02x%02x" (ash (aref color 0) -8) (ash (aref color 1) -8) (ash (aref color 2) -8)))
 
 
 (defun hl-block--color-tint-add (a b tint)
-  "Tint color lighter from A to B by TINT amount."
+  "Add B scaled by TINT to color A, making it lighter."
   (declare (important-return-value t))
   (vector
    (+ (aref a 0) (* tint (aref b 0)))
@@ -184,7 +185,7 @@ Inverse of `color-values'."
 
 
 (defun hl-block--color-tint-sub (a b tint)
-  "Tint colors darker from A to B by TINT amount."
+  "Subtract B scaled by TINT from color A, making it darker."
   (declare (important-return-value t))
   (vector
    (- (aref a 0) (* tint (aref b 0)))
@@ -193,24 +194,25 @@ Inverse of `color-values'."
 
 
 (defun hl-block--overlay-create-color-tint (block-list end-fallback)
-  "Update the overlays based on the cursor location.
-Argument BLOCK-LIST represents start-end ranges of braces.
+  "Create overlays with tinted backgrounds for nested blocks.
+Argument BLOCK-LIST represents start-end ranges of brackets.
 Argument END-FALLBACK is the point used when no matching end bracket is found,
-typically `(point)'."
+typically the result of calling `point'."
   (declare (important-return-value nil))
   (let* ((block-list-len (length block-list))
          (bg-color (apply #'vector (color-values (face-attribute 'default :background))))
          (bg-color-tint (apply #'vector (color-values hl-block-color-tint)))
-         ;; Check dark background is light/dark.
+         ;; Check if background is light or dark.
+         ;; 98304 = 65535 * 1.5, i.e. 50% of max RGB sum (65535 * 3).
          (do-highlight (> 98304 (+ (aref bg-color 0) (aref bg-color 1) (aref bg-color 2))))
-         ;; Iterator.
+         ;; Tint level counter.
          (i 0))
     (pcase-let ((`(,beg-prev . ,end-prev) (pop block-list)))
-      (unless end-prev ; May be `nil' for un-matched brackets.
+      (unless end-prev ; May be `nil' for unmatched brackets.
         (setq end-prev end-fallback))
       (while block-list
         (pcase-let ((`(,beg . ,end) (pop block-list)))
-          (unless end ; May be `nil' for un-matched brackets.
+          (unless end ; May be `nil' for unmatched brackets.
             (setq end end-fallback))
           (let ((elem-overlay-beg (make-overlay beg beg-prev))
                 (elem-overlay-end (make-overlay end-prev end)))
@@ -239,18 +241,17 @@ typically `(point)'."
 
 
 ;; ---------------------------------------------------------------------------
-;; Internal Color Tint (Draw Style)
+;; Internal Bracket (Draw Style)
 
 (defun hl-block--overlay-create-bracket (block-list)
-  "Update the overlays based on the cursor location.
-Argument BLOCK-LIST represents start-end ranges of braces."
+  "Create overlays to highlight surrounding brackets.
+Argument BLOCK-LIST represents start-end ranges of brackets."
   (declare (important-return-value nil))
-  ;; hl-block-bracket-face
   (pcase-dolist (`(,beg . ,end) block-list)
     (let ((elem-overlay-beg (make-overlay beg (1+ beg))))
       (overlay-put elem-overlay-beg 'face hl-block-bracket-face)
       (push elem-overlay-beg hl-block--overlays)
-      (when end ; May be `nil' for un-matched brackets.
+      (when end ; May be `nil' for unmatched brackets.
         (let ((elem-overlay-end (make-overlay (1- end) end)))
           (overlay-put elem-overlay-end 'face hl-block-bracket-face)
           (push elem-overlay-end hl-block--overlays))))))
@@ -303,26 +304,28 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 ;; This works as follows:
 ;;
 ;; - The timer is kept active as long as the local mode is enabled.
-;; - Entering a buffer runs the buffer local `window-state-change-hook'
+;; - Entering a buffer runs the buffer-local `window-state-change-hook'
 ;;   immediately which checks if the mode is enabled,
-;;   set up the global timer if it is.
-;; - Switching any other buffer wont run this hook,
-;;   rely on the idle timer it's self running, which detects the active mode,
-;;   canceling it's self if the mode isn't active.
+;;   sets up the global timer if it is.
+;; - Switching any other buffer won't run this hook,
+;;   we rely on the idle timer itself running, which detects the active mode,
+;;   canceling itself if the mode isn't active.
 ;;
 ;; This is a reliable way of using a global,
-;; repeating idle timer that is effectively buffer local.
+;; repeating idle timer that is effectively buffer-local.
 ;;
 
-;; Global idle timer (repeating), keep active while the buffer-local mode is enabled.
-(defvar hl-block--global-timer nil)
-;; When t, the timer will update buffers in all other visible windows.
-(defvar hl-block--dirty-flush-all nil)
-;; When true, the buffer should be updated when inactive.
-(defvar-local hl-block--dirty nil)
+(defvar hl-block--global-timer nil
+  "Global idle timer for highlighting, active while buffer-local mode is enabled.")
+
+(defvar hl-block--dirty-flush-all nil
+  "When non-nil, the timer will update all dirty buffers in visible windows.")
+
+(defvar-local hl-block--dirty nil
+  "When non-nil, the buffer should be updated when inactive.")
 
 (defun hl-block--time-callback-or-disable ()
-  "Callback that run the repeat timer."
+  "Timer callback that refreshes highlighting."
   (declare (important-return-value nil))
 
   ;; Ensure all other buffers are highlighted on request.
@@ -339,7 +342,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
       (setq hl-block--dirty-flush-all t)))
 
     (when hl-block--dirty-flush-all
-      ;; Run the mode callback for all other buffers in the queue.
+      ;; Refresh overlays for all dirty buffers in visible windows.
       (dolist (frame (frame-list))
         (when (frame-live-p frame)
           (dolist (win (window-list frame -1))
@@ -359,7 +362,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
     (cond
      (is-mode-active
       (hl-block--overlay-refresh))
-     (t ; Cancel the timer until the current buffer uses this mode again.
+     (t ;; Cancel the timer until the current buffer uses this mode again.
       (hl-block--time-ensure nil)))))
 
 (defun hl-block--time-ensure (state)
@@ -376,9 +379,9 @@ Argument BLOCK-LIST represents start-end ranges of braces."
       (setq hl-block--global-timer nil)))))
 
 (defun hl-block--time-reset ()
-  "Run this when the buffer was changed."
+  "Reset timer state when window state changes."
   (declare (important-return-value nil))
-  ;; Ensure changing windows doesn't leave other buffers with stale highlight.
+  ;; Ensure changing windows doesn't leave other buffers with stale highlighting.
   (cond
    ((bound-and-true-p hl-block-mode)
     (setq hl-block--dirty-flush-all t)
@@ -388,7 +391,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
     (hl-block--time-ensure nil))))
 
 (defun hl-block--time-buffer-local-enable ()
-  "Ensure buffer local state is enabled."
+  "Ensure buffer-local state is enabled."
   (declare (important-return-value nil))
   ;; Needed in case focus changes before the idle timer runs.
   (setq hl-block--dirty-flush-all t)
@@ -397,7 +400,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
   (add-hook 'window-state-change-hook #'hl-block--time-reset nil t))
 
 (defun hl-block--time-buffer-local-disable ()
-  "Ensure buffer local state is disabled."
+  "Ensure buffer-local state is disabled."
   (declare (important-return-value nil))
   (kill-local-variable 'hl-block--dirty)
   (hl-block--time-ensure nil)
@@ -411,14 +414,14 @@ Argument BLOCK-LIST represents start-end ranges of braces."
   (declare (important-return-value nil))
   (hl-block--time-buffer-local-enable)
 
-  ;; Setup brackets:
+  ;; Set up brackets:
   ;; Keep as nil to match all brackets,
-  ;; use a string to convert the string to a list.
+  ;; otherwise convert the string to a list of characters.
   (let ((bracket-orig (append hl-block-bracket nil)))
     ;; Make a local, sanitized version of this variable.
     (setq-local hl-block-bracket nil)
     (when bracket-orig
-      ;; Filter for recognized values.
+      ;; Filter for characters with open-bracket syntax.
       (while bracket-orig
         (let ((ch (pop bracket-orig)))
           (when (eq ?\( (char-syntax ch))
@@ -433,7 +436,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
   (hl-block--time-buffer-local-disable))
 
 (defun hl-block--mode-turn-on ()
-  "Enable command `hl-block-mode'."
+  "Enable `hl-block-mode' in the current buffer."
   (declare (important-return-value nil))
   (when (and (null (minibufferp)) (not (bound-and-true-p hl-block-mode)))
     (hl-block-mode 1)))
@@ -443,7 +446,7 @@ Argument BLOCK-LIST represents start-end ranges of braces."
 
 ;;;###autoload
 (define-minor-mode hl-block-mode
-  "Highlight block under the cursor."
+  "Highlight blocks surrounding the cursor."
   :global nil
   :lighter hl-block-mode-lighter
 
