@@ -49,9 +49,9 @@
   "Highlight nested blocks or brackets."
   :group 'convenience)
 
-(defcustom hl-block-bracket "{"
+(defcustom hl-block-bracket (list ?{)
   "Characters to use as starting brackets (set to nil to use all brackets)."
-  :type '(choice (const nil) string))
+  :type '(choice (const nil) (repeat character)))
 
 (defcustom hl-block-delay 0.2
   "Idle time to wait before highlighting (in seconds)."
